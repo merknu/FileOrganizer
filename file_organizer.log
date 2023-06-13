@@ -1,0 +1,68 @@
+2023-04-01 21:24:22,950 - ERROR - processing_thread - run - 20 - Error in ProcessingThread.run: process_folders() takes 2 positional arguments but 3 were given
+2023-04-01 21:24:27,830 - ERROR - processing_thread - run - 20 - Error in ProcessingThread.run: process_folders() takes 2 positional arguments but 3 were given
+2023-04-01 21:33:21,024 - ERROR - processing_thread - run - 20 - Error in ProcessingThread.run: process_folders() takes 2 positional arguments but 3 were given
+2023-04-01 21:33:22,696 - ERROR - processing_thread - run - 20 - Error in ProcessingThread.run: process_folders() takes 2 positional arguments but 3 were given
+2023-04-01 21:33:23,108 - ERROR - processing_thread - run - 20 - Error in ProcessingThread.run: process_folders() takes 2 positional arguments but 3 were given
+2023-04-01 21:33:23,331 - ERROR - processing_thread - run - 20 - Error in ProcessingThread.run: process_folders() takes 2 positional arguments but 3 were given
+2023-04-01 21:33:23,550 - ERROR - processing_thread - run - 20 - Error in ProcessingThread.run: process_folders() takes 2 positional arguments but 3 were given
+2023-04-01 21:33:23,738 - ERROR - processing_thread - run - 20 - Error in ProcessingThread.run: process_folders() takes 2 positional arguments but 3 were given
+2023-04-01 21:33:23,915 - ERROR - processing_thread - run - 20 - Error in ProcessingThread.run: process_folders() takes 2 positional arguments but 3 were given
+2023-04-01 21:33:24,082 - ERROR - processing_thread - run - 20 - Error in ProcessingThread.run: process_folders() takes 2 positional arguments but 3 were given
+2023-04-01 21:33:24,259 - ERROR - processing_thread - run - 20 - Error in ProcessingThread.run: process_folders() takes 2 positional arguments but 3 were given
+2023-04-01 21:33:24,425 - ERROR - processing_thread - run - 20 - Error in ProcessingThread.run: process_folders() takes 2 positional arguments but 3 were given
+2023-04-01 21:33:25,566 - ERROR - processing_thread - run - 20 - Error in ProcessingThread.run: process_folders() takes 2 positional arguments but 3 were given
+2023-04-01 21:33:25,785 - ERROR - processing_thread - run - 20 - Error in ProcessingThread.run: process_folders() takes 2 positional arguments but 3 were given
+2023-04-01 21:33:25,963 - ERROR - processing_thread - run - 20 - Error in ProcessingThread.run: process_folders() takes 2 positional arguments but 3 were given
+2023-04-01 21:33:26,805 - ERROR - processing_thread - run - 20 - Error in ProcessingThread.run: process_folders() takes 2 positional arguments but 3 were given
+2023-04-01 21:33:27,766 - ERROR - processing_thread - run - 20 - Error in ProcessingThread.run: process_folders() takes 2 positional arguments but 3 were given
+2023-04-01 22:15:56,734 - ERROR - processing_thread - run - 20 - Error in ProcessingThread.run: 'FileOrganizerMainWindow' object has no attribute 'preview_text_edit'
+2023-04-01 22:16:00,590 - ERROR - processing_thread - run - 20 - Error in ProcessingThread.run: 'FileOrganizerMainWindow' object has no attribute 'preview_text_edit'
+2023-04-01 22:16:00,833 - ERROR - processing_thread - run - 20 - Error in ProcessingThread.run: 'FileOrganizerMainWindow' object has no attribute 'preview_text_edit'
+2023-04-01 22:16:01,359 - ERROR - processing_thread - run - 20 - Error in ProcessingThread.run: 'FileOrganizerMainWindow' object has no attribute 'preview_text_edit'
+2023-04-01 22:16:20,222 - ERROR - processing_thread - run - 20 - Error in ProcessingThread.run: 'FileOrganizerMainWindow' object has no attribute 'preview_text_edit'
+2023-04-02 00:40:54,083 - ERROR - processing_thread - run - 29 - Error in ProcessingThread.run: [WinError 2] Systemet finner ikke angitt fil.
+2023-04-02 00:41:00,462 - ERROR - processing_thread - run - 29 - Error in ProcessingThread.run: [WinError 2] Systemet finner ikke angitt fil.
+2023-04-02 00:41:01,523 - ERROR - processing_thread - run - 29 - Error in ProcessingThread.run: [WinError 2] Systemet finner ikke angitt fil.
+2023-04-02 00:41:06,237 - ERROR - processing_thread - run - 29 - Error in ProcessingThread.run: [WinError 2] Systemet finner ikke angitt fil.
+2023-04-02 00:42:47,568 - ERROR - processing_thread - run - 29 - Error in ProcessingThread.run: [WinError 2] Systemet finner ikke angitt fil.
+2023-04-02 00:42:49,437 - ERROR - processing_thread - run - 29 - Error in ProcessingThread.run: [WinError 2] Systemet finner ikke angitt fil.
+2023-04-02 01:17:07,279 - ERROR - processing_thread - run - 30 - Error in ProcessingThread.run: [WinError 2] Systemet finner ikke angitt fil.
+2023-04-02 01:17:10,879 - ERROR - processing_thread - run - 30 - Error in ProcessingThread.run: [WinError 2] Systemet finner ikke angitt fil.
+2023-04-02 01:17:11,507 - ERROR - processing_thread - run - 30 - Error in ProcessingThread.run: [WinError 2] Systemet finner ikke angitt fil.
+2023-04-02 01:20:08,833 - ERROR - processing_thread - run - 30 - Error in ProcessingThread.run: [WinError 2] Systemet finner ikke angitt fil.
+2023-04-02 01:20:11,611 - ERROR - processing_thread - run - 30 - Error in ProcessingThread.run: [WinError 2] Systemet finner ikke angitt fil.
+2023-04-02 01:20:12,761 - ERROR - processing_thread - run - 30 - Error in ProcessingThread.run: [WinError 2] Systemet finner ikke angitt fil.
+2023-04-02 01:20:17,758 - ERROR - processing_thread - run - 30 - Error in ProcessingThread.run: [WinError 2] Systemet finner ikke angitt fil.
+2023-04-02 01:20:18,755 - ERROR - processing_thread - run - 30 - Error in ProcessingThread.run: [WinError 2] Systemet finner ikke angitt fil.
+2023-04-02 01:20:19,682 - ERROR - processing_thread - run - 30 - Error in ProcessingThread.run: [WinError 2] Systemet finner ikke angitt fil.
+2023-04-02 01:21:20,900 - ERROR - processing_thread - run - 30 - Error in ProcessingThread.run: [WinError 2] Systemet finner ikke angitt fil.
+2023-04-02 01:23:58,781 - ERROR - processing_thread - run - 30 - Error in ProcessingThread.run: [WinError 2] Systemet finner ikke angitt fil.
+2023-04-02 13:58:58,632 - ERROR - main_window - on_preview_button_clicked - 149 - Error in on_preview_button_clicked: argument 1 has unexpected type 'NoneType'
+2023-04-02 13:59:00,614 - ERROR - main_window - on_preview_button_clicked - 149 - Error in on_preview_button_clicked: argument 1 has unexpected type 'NoneType'
+2023-04-02 13:59:00,813 - ERROR - main_window - on_preview_button_clicked - 149 - Error in on_preview_button_clicked: argument 1 has unexpected type 'NoneType'
+2023-04-02 13:59:03,667 - ERROR - main_window - on_start_processing_button_clicked - 134 - Error in on_start_processing_button_clicked: argument 1 has unexpected type 'NoneType'
+2023-04-02 13:59:04,776 - ERROR - main_window - on_start_processing_button_clicked - 134 - Error in on_start_processing_button_clicked: argument 1 has unexpected type 'NoneType'
+2023-04-02 13:59:09,086 - ERROR - main_window - on_start_processing_button_clicked - 134 - Error in on_start_processing_button_clicked: argument 1 has unexpected type 'NoneType'
+2023-04-02 14:02:26,396 - ERROR - main_window - on_preview_button_clicked - 150 - Error in on_preview_button_clicked: 'NoneType' object has no attribute 'file_processed'
+2023-04-02 14:02:27,726 - ERROR - main_window - on_preview_button_clicked - 150 - Error in on_preview_button_clicked: 'NoneType' object has no attribute 'file_processed'
+2023-04-02 14:02:27,929 - ERROR - main_window - on_preview_button_clicked - 150 - Error in on_preview_button_clicked: 'NoneType' object has no attribute 'file_processed'
+2023-04-02 14:02:28,123 - ERROR - main_window - on_preview_button_clicked - 150 - Error in on_preview_button_clicked: 'NoneType' object has no attribute 'file_processed'
+2023-04-02 14:02:29,706 - ERROR - main_window - on_start_processing_button_clicked - 134 - Error in on_start_processing_button_clicked: 'NoneType' object has no attribute 'file_processed'
+2023-04-02 14:02:29,941 - ERROR - main_window - on_start_processing_button_clicked - 134 - Error in on_start_processing_button_clicked: 'NoneType' object has no attribute 'file_processed'
+2023-04-02 14:02:31,640 - ERROR - main_window - on_start_processing_button_clicked - 134 - Error in on_start_processing_button_clicked: 'NoneType' object has no attribute 'file_processed'
+2023-04-02 14:02:36,587 - ERROR - main_window - on_start_processing_button_clicked - 134 - Error in on_start_processing_button_clicked: 'NoneType' object has no attribute 'file_processed'
+2023-04-02 14:07:04,351 - ERROR - main_window - on_preview_button_clicked - 150 - Error in on_preview_button_clicked: argument 1 has unexpected type 'NoneType'
+2023-04-02 14:07:05,613 - ERROR - main_window - on_start_processing_button_clicked - 134 - Error in on_start_processing_button_clicked: argument 1 has unexpected type 'NoneType'
+2023-04-02 14:12:55,618 - ERROR - main_window - on_preview_button_clicked - 154 - Error in on_preview_button_clicked: argument 1 has unexpected type 'NoneType'
+2023-04-02 14:12:58,922 - ERROR - main_window - on_start_processing_button_clicked - 138 - Error in on_start_processing_button_clicked: argument 1 has unexpected type 'NoneType'
+2023-04-02 14:13:01,237 - ERROR - main_window - on_start_processing_button_clicked - 138 - Error in on_start_processing_button_clicked: argument 1 has unexpected type 'NoneType'
+2023-04-02 14:13:05,685 - ERROR - main_window - on_start_processing_button_clicked - 138 - Error in on_start_processing_button_clicked: argument 1 has unexpected type 'NoneType'
+2023-04-02 14:13:06,775 - ERROR - main_window - on_preview_button_clicked - 154 - Error in on_preview_button_clicked: argument 1 has unexpected type 'NoneType'
+2023-04-02 14:17:11,858 - ERROR - main_window - on_preview_button_clicked - 154 - Error in on_preview_button_clicked: argument 1 has unexpected type 'NoneType'
+2023-04-02 14:17:13,967 - ERROR - main_window - on_start_processing_button_clicked - 138 - Error in on_start_processing_button_clicked: argument 1 has unexpected type 'NoneType'
+2023-04-02 14:17:15,170 - ERROR - main_window - on_preview_button_clicked - 154 - Error in on_preview_button_clicked: argument 1 has unexpected type 'NoneType'
+2023-04-02 14:17:15,777 - ERROR - main_window - on_start_processing_button_clicked - 138 - Error in on_start_processing_button_clicked: argument 1 has unexpected type 'NoneType'
+2023-04-02 14:24:59,043 - ERROR - main_window - on_preview_button_clicked - 154 - Error in on_preview_button_clicked: argument 1 has unexpected type 'NoneType'
+2023-04-02 14:25:00,912 - ERROR - main_window - on_start_processing_button_clicked - 138 - Error in on_start_processing_button_clicked: argument 1 has unexpected type 'NoneType'
+2023-04-02 14:25:02,046 - ERROR - main_window - on_start_processing_button_clicked - 138 - Error in on_start_processing_button_clicked: argument 1 has unexpected type 'NoneType'
+2023-04-02 14:25:06,403 - ERROR - main_window - on_start_processing_button_clicked - 138 - Error in on_start_processing_button_clicked: argument 1 has unexpected type 'NoneType'
