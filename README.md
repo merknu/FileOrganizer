@@ -9,6 +9,14 @@ FileOrganizer is a powerful Python-based application designed to automate the or
   - Audio files by duration (e.g., `Audio/180s/`)
   - Documents by type (PDF, DOCX, TXT)
   - Videos by duration
+- **📸 Advanced Photo Transfer Tool:** NEW! Specialized tool for selective photo transfers
+  - Transfer photos from phones/cameras to external drives
+  - Date range filtering for selective transfers
+  - File integrity checking with size verification
+  - Resume capability after interruptions
+  - Automatic retry for failed transfers
+  - Progress tracking with persistent todo list
+  - Support for multiple file types (JPEG, PNG, RAW, Videos)
 - **🔍 Duplicate Detection:** Intelligent duplicate handling with hash comparison
   - Keep original
   - Overwrite existing
@@ -27,11 +35,13 @@ FileOrganizer is a powerful Python-based application designed to automate the or
   - Drag-and-drop folder support
   - Real-time progress tracking
   - Preview pane for changes
+  - Dual-mode interface (File Organizer & Photo Transfer)
 - **⚡ Performance Features:**
   - Multi-threaded processing
   - Efficient file handling
   - Progress callbacks
   - Comprehensive error handling
+  - Automatic resume on failure
 
 ## 🛠️ Components
 - `file_handler/`: Core file processing logic
@@ -78,9 +88,31 @@ python setup.py install
 
 ### GUI Mode (Recommended)
 ```bash
-# Run the graphical interface
+# Run the full FileOrganizer Suite
 python main.py
+
+# Run only the Photo Transfer Tool
+python photo_transfer.py
+# or
+python main.py --transfer
 ```
+
+### Photo Transfer Tool Usage
+The Photo Transfer Tool is perfect for:
+- Transferring photos from phones/cameras to external drives
+- Selective transfer by date range (e.g., "only photos from last vacation")
+- Batch processing with resume capability
+- Ensuring file integrity during transfers
+
+**Features:**
+1. **Source Selection**: Browse to your phone's DCIM folder or camera's memory card
+2. **Destination**: Select external drive or backup location
+3. **Date Filtering**: Optional date range selection
+4. **File Type Filter**: Choose specific file types (JPEG, PNG, RAW, Videos)
+5. **Progress Tracking**: See real-time transfer progress
+6. **Resume Capability**: If interrupted, can resume from where it stopped
+7. **Integrity Check**: Verifies file sizes match after transfer
+8. **Retry Logic**: Automatically retries failed transfers up to 3 times
 
 ### Command Line Mode
 ```python
