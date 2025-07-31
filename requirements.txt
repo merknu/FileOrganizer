@@ -1,0 +1,20 @@
+# Core dependencies
+PyQt5>=5.15.0
+watchdog>=2.1.0
+
+# Media file handling
+Pillow>=10.0.0  # For image metadata
+mutagen>=1.46.0  # For audio metadata
+python-magic>=0.4.27  # For file type detection
+
+# Document handling
+pypdf>=3.17.0  # For PDF metadata
+python-docx>=0.8.11  # For Word document metadata
+
+# Video handling
+moviepy>=1.0.3  # For video metadata
+
+# Development dependencies
+black>=23.0.0
+flake8>=6.0.0
+pytest>=7.0.0

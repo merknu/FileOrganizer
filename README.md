@@ -1,42 +1,182 @@
-# FileOrganize
+# FileOrganizer
 
 ## Overview
-FileOrganize is a Python-based application designed to automate the organization of files in a directory. It categorizes and moves files into appropriate subdirectories based on their attributes and metadata. The application supports handling various file types, including images, audio, documents, and videos.
+FileOrganizer is a powerful Python-based application designed to automate the organization of files in directories. It intelligently categorizes and moves files into appropriate subdirectories based on their type, metadata, and configurable rules. The application supports various file types including images, audio, documents, and videos, with a modern GUI interface for ease of use.
 
-## Features
-- **File Categorization:** Organizes files based on type and metadata (e.g., images by resolution, audio by duration).
-- **Duplicate Handling:** Detects duplicates with options to keep, overwrite, or rename.
-- **Metadata Extraction:** Extracts metadata such as image size, audio duration, document word count, and video duration.
-- **Recursive Processing:** Capable of processing files in subdirectories.
-- **Preview Mode:** Allows previewing the organization changes without actual file movement.
-- **GUI Support:** Features a user-friendly graphical interface built with PyQt5.
-- **Drag-and-Drop:** Enables dragging and dropping folders for processing.
-- **Real-Time Progress Update:** Shows the progress of file organization in real-time.
+## ✨ Features
+- **🗂️ Smart File Categorization:** Automatically organizes files based on type and metadata
+  - Images by resolution (e.g., `Images/1920x1080/`)
+  - Audio files by duration (e.g., `Audio/180s/`)
+  - Documents by type (PDF, DOCX, TXT)
+  - Videos by duration
+- **🔍 Duplicate Detection:** Intelligent duplicate handling with hash comparison
+  - Keep original
+  - Overwrite existing
+  - Rename with incremental suffix
+- **📊 Advanced Metadata Extraction:** 
+  - Image dimensions and format
+  - Audio/Video duration and codec info
+  - Document word count and page count
+  - File size and creation date
+- **🔄 Flexible Processing Options:**
+  - Recursive subdirectory processing
+  - Preview mode for safe operation
+  - Batch processing support
+- **🖥️ Modern GUI Interface:**
+  - User-friendly PyQt5 interface
+  - Drag-and-drop folder support
+  - Real-time progress tracking
+  - Preview pane for changes
+- **⚡ Performance Features:**
+  - Multi-threaded processing
+  - Efficient file handling
+  - Progress callbacks
+  - Comprehensive error handling
 
-## Components
-- `file_handler/file_utils.py`: Handles file operations, including moving, duplicate handling, and metadata extraction.
-- `config/config_handler.py`: Manages configuration settings.
-- `event/file_organizer_event.py`: Defines event handlers for file system monitoring.
-- `gui/main_window.py`: Implements the GUI's main window for user interactions and status display.
+## 🛠️ Components
+- `file_handler/`: Core file processing logic
+  - `file_utils.py`: Main organization engine
+  - `metadata_handlers.py`: Metadata extraction for all file types
+  - `file_operations.py`: Safe file operations with rollback support
+- `config/`: Configuration management
+  - `config_handler.py`: JSON configuration loader
+  - `config.json`: Customizable rules and settings
+- `event/`: File system monitoring
+  - `file_organizer_event.py`: Real-time folder monitoring
+- `gui/`: Graphical user interface
+  - `main_window.py`: Main application window
+  - `processing_thread.py`: Background processing
 
-## Installation
-Ensure Python is installed on your system. Clone the repository and install dependencies:
+## 📦 Installation
 
+### Prerequisites
+- Python 3.8 or higher
+- pip package manager
+
+### Quick Install
 ```bash
-git clone https://github.com/merknu/FileOrganize.git
-cd FileOrganize
+# Clone the repository
+git clone https://github.com/merknu/FileOrganizer.git
+cd FileOrganizer
+
+# Install in development mode
+pip install -e .
+
+# Or install with all dependencies
 pip install -r requirements.txt
 ```
-## Usage
-# Run the application with Python:
+
+### Install from Source
+```bash
+# Clone and install
+git clone https://github.com/merknu/FileOrganizer.git
+cd FileOrganizer
+python setup.py install
+```
+
+## 🚀 Usage
+
+### GUI Mode (Recommended)
+```bash
+# Run the graphical interface
 python main.py
-Use the GUI to select folders and start the organization process. Options to preview changes are available.
+```
 
-## Configuration
-Edit config.json to specify file categories, default actions for duplicates, and other preferences.
+### Command Line Mode
+```python
+# Example usage in Python
+from file_handler.file_utils import organize_files
+from config.config_handler import ConfigHandler
 
-## Contributing
-Contributions are welcome. Please read the contributing guidelines before submitting pull requests.
+# Load configuration
+config = ConfigHandler('config/config.json').config
 
-## License
-This project is licensed under the MIT License - see the LICENSE file for details.
+# Organize files in preview mode first
+summary = organize_files('/path/to/folder', config, preview_mode=True)
+print(f"Preview summary: {summary}")
+
+# If satisfied, run actual organization
+summary = organize_files('/path/to/folder', config, preview_mode=False)
+print(f"Files organized: {summary}")
+```
+
+## ⚙️ Configuration
+The `config.json` file allows customization of:
+
+```json
+{
+    "file_categories": {
+        "Images": [".jpg", ".jpeg", ".png", ".gif", ".bmp"],
+        "Audio": [".mp3", ".wav", ".flac", ".m4a", ".ogg"],
+        "Documents": [".pdf", ".doc", ".docx", ".txt"],
+        "Video": [".mp4", ".avi", ".mov", ".mkv", ".wmv"]
+    },
+    "subfolders": {
+        ".pdf": "PDFs",
+        ".doc": "Word_Documents",
+        ".docx": "Word_Documents",
+        ".txt": "Text_Files"
+    },
+    "default_duplicate_action": "k"  // k=keep, o=overwrite, r=rename
+}
+```
+
+## 🔧 Development
+
+### Setting up Development Environment
+```bash
+# Clone repository
+git clone https://github.com/merknu/FileOrganizer.git
+cd FileOrganizer
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install development dependencies
+pip install -e ".[dev]"
+```
+
+### Running Tests
+```bash
+# Run tests
+pytest
+
+# Run with coverage
+pytest --cov=file_handler --cov=config --cov=event
+```
+
+### Code Quality
+```bash
+# Format code
+black .
+
+# Check style
+flake8 .
+```
+
+## 📋 Requirements
+- Python 3.8+
+- PyQt5 for GUI
+- Pillow for image processing
+- mutagen for audio metadata
+- pypdf for PDF handling
+- python-docx for Word documents
+- moviepy for video processing
+- watchdog for file monitoring
+
+## 🤝 Contributing
+Contributions are welcome! Please:
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📄 License
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+- PyQt5 for the excellent GUI framework
+- The Python community for amazing libraries
+- All contributors and users of FileOrganizer
