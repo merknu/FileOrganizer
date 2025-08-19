@@ -1,0 +1,136 @@
+# GPU Acceleration Dependencies for FileOrganizer
+# Install these packages for GPU-accelerated file processing
+
+# Base requirements (include standard requirements)
+-r requirements.txt
+
+# Core GPU libraries
+numpy>=1.21.0                    # Essential for GPU array operations
+
+# CUDA Support (NVIDIA GPUs)
+# Choose one of the following CuPy versions based on your CUDA version:
+# For CUDA 11.x:
+cupy-cuda11x>=12.0.0            # Primary CUDA support
+# For CUDA 12.x:
+# cupy-cuda12x>=12.0.0          # Uncomment if using CUDA 12.x
+
+# Alternative CUDA library (choose cupy OR pycuda, not both)
+# pycuda>=2022.1                 # Alternative CUDA interface
+
+# OpenCL Support (Universal GPU support - AMD, Intel, NVIDIA)
+pyopencl>=2022.1                 # OpenCL interface
+# Additional OpenCL tools
+pyopencl-stubs>=2022.1           # Type hints for PyOpenCL
+
+# Computer Vision and Image Processing
+opencv-python>=4.5.0             # GPU-accelerated image operations
+# OR use opencv-contrib-python for additional features:
+# opencv-contrib-python>=4.5.0   # Extended OpenCV with contrib modules
+
+# High-performance image processing
+scikit-image>=0.19.0             # Scientific image processing
+Pillow>=10.0.0                   # Already in base requirements, ensure compatibility
+
+# Linear Algebra and Scientific Computing
+scipy>=1.9.0                     # Scientific computing library
+scikit-learn>=1.1.0              # Machine learning (optional, for advanced features)
+
+# Performance monitoring and profiling
+psutil>=5.9.0                    # System monitoring
+GPUtil>=1.4.0                    # GPU monitoring (NVIDIA specific)
+py3nvml>=0.2.7                   # NVIDIA ML library bindings
+
+# Memory management
+pympler>=0.9                     # Memory profiling
+objgraph>=3.5.0                  # Object reference tracking
+
+# Parallel processing enhancements  
+joblib>=1.2.0                    # Parallel processing utilities
+concurrent-futures>=3.1.1        # Backport of concurrent.futures (Python 3.2+)
+
+# Development and debugging (optional)
+line_profiler>=3.5.0             # Line-by-line profiling
+memory_profiler>=0.60.0          # Memory usage profiling
+py-spy>=0.3.0                    # Sampling profiler
+
+# Platform-specific packages (optional)
+# Windows-specific GPU monitoring
+# wmi>=1.5.1; sys_platform == "win32"
+
+# Linux-specific GPU monitoring  
+# py-nvml>=11.0.0; sys_platform == "linux"
+
+# GPU Framework alternatives (choose one)
+# Numba (JIT compiler with GPU support)
+numba>=0.56.0                    # JIT compilation for GPU kernels
+
+# OR JAX (Google's GPU/TPU framework)
+# jax>=0.4.0                     # Google JAX for GPU acceleration
+# jaxlib>=0.4.0                  # JAX backend library
+
+# Specialized libraries for advanced features
+# Video processing
+moviepy>=1.0.3                  # Already in base requirements
+
+# Audio processing (for GPU-accelerated audio features)
+librosa>=0.9.0                   # Audio analysis
+soundfile>=0.10.0                # Audio file I/O
+
+# Document processing enhancements
+pypdf>=3.17.0                    # Already in base requirements
+python-docx>=0.8.11              # Already in base requirements
+
+# Additional utilities
+tqdm>=4.64.0                     # Progress bars
+click>=8.0.0                     # Command line interface
+colorama>=0.4.0                  # Colored terminal output
+tabulate>=0.9.0                  # Table formatting
+
+# Configuration and serialization
+pyyaml>=6.0                      # YAML configuration files
+toml>=0.10.0                     # TOML configuration support
+
+# Testing and quality assurance (for GPU code testing)
+pytest>=7.0.0                    # Already in base requirements
+pytest-benchmark>=4.0.0          # Performance benchmarking
+pytest-mock>=3.8.0               # Mocking for tests
+pytest-cov>=4.0.0                # Code coverage
+
+# Installation Notes:
+#
+# 1. CUDA Installation:
+#    - Install NVIDIA drivers and CUDA toolkit first
+#    - Verify CUDA version with: nvcc --version
+#    - Choose appropriate cupy version above
+#
+# 2. OpenCL Installation:
+#    - Windows: Usually included with GPU drivers
+#    - Linux: Install opencl-headers and vendor-specific OpenCL runtime
+#    - macOS: OpenCL included with system
+#
+# 3. Memory Requirements:
+#    - Minimum 4GB RAM recommended
+#    - 2GB+ GPU memory recommended for optimal performance
+#    - Adjust chunk sizes in config based on available memory
+#
+# 4. Performance Optimization:
+#    - Install Intel MKL for CPU fallback optimization:
+#      pip install mkl mkl-service
+#    - For AMD GPUs on Linux, consider ROCm:
+#      pip install torch torchvision --extra-index-url https://download.pytorch.org/whl/rocm5.2
+#
+# 5. Troubleshooting:
+#    - CUDA out of memory: Reduce chunk_size_mb in config
+#    - OpenCL device not found: Check driver installation
+#    - Import errors: Ensure all dependencies match your GPU setup
+#
+# Installation command examples:
+#
+# Full GPU setup (NVIDIA with CUDA 11.x):
+# pip install -r requirements-gpu.txt
+#
+# CPU-only fallback:  
+# pip install -r requirements.txt
+#
+# Minimal GPU setup (OpenCL only):
+# pip install numpy pyopencl opencv-python pillow

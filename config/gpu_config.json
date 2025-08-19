@@ -1,0 +1,196 @@
+{
+  "gpu_acceleration": {
+    "enable_gpu": true,
+    "backend": "auto",
+    "memory_mode": "balanced",
+    "fallback_to_cpu": true,
+    "run_initial_benchmark": true,
+    "max_gpu_memory_usage": 0.8
+  },
+  
+  "file_hashing": {
+    "enable_gpu_hashing": true,
+    "chunk_size_mb": 64,
+    "max_concurrent_files": 4,
+    "gpu_memory_limit_mb": 512,
+    "min_file_size_for_gpu": 1048576,
+    "algorithms": ["sha256", "md5"]
+  },
+  
+  "image_processing": {
+    "enable_gpu_processing": true,
+    "thumbnail_sizes": [
+      [128, 128],
+      [256, 256],
+      [512, 512]
+    ],
+    "thumbnail_quality": 85,
+    "max_concurrent_images": 4,
+    "gpu_memory_limit_mb": 1024,
+    "min_image_size_for_gpu": 524288,
+    "supported_formats": [".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".webp", ".heic", ".heif"],
+    "extract_advanced_metadata": true,
+    "generate_previews": true,
+    "preview_max_dimension": 1920
+  },
+  
+  "batch_processing": {
+    "enable_batch_gpu": true,
+    "batch_size_auto": true,
+    "max_batch_size": 100,
+    "batch_memory_limit_mb": 2048,
+    "parallel_batches": 2,
+    "progress_reporting_interval": 10
+  },
+  
+  "directory_scanning": {
+    "enable_gpu_scanning": false,
+    "parallel_directory_threads": 8,
+    "file_filter_gpu": false,
+    "metadata_cache_size_mb": 256,
+    "scan_depth_limit": 10
+  },
+  
+  "performance_optimization": {
+    "memory_pool_size_mb": 1024,
+    "stream_processing": true,
+    "async_transfers": true,
+    "kernel_optimization": true,
+    "cache_compiled_kernels": true,
+    "prefetch_data": true
+  },
+  
+  "monitoring": {
+    "enable_performance_monitoring": true,
+    "log_gpu_operations": true,
+    "benchmark_frequency_hours": 24,
+    "memory_usage_warnings": true,
+    "memory_warning_threshold": 0.9,
+    "performance_alerts": true,
+    "min_performance_threshold_mb_s": 10.0
+  },
+  
+  "compatibility": {
+    "cuda_min_version": "11.0",
+    "opencl_min_version": "1.2",
+    "driver_requirements": {
+      "nvidia": "450.0",
+      "amd": "21.0",
+      "intel": "27.0"
+    },
+    "python_requirements": {
+      "cupy": ">=12.0.0",
+      "pyopencl": ">=2022.1",
+      "opencv-python": ">=4.5.0"
+    }
+  },
+  
+  "fallback_settings": {
+    "cpu_thread_count": 0,
+    "cpu_chunk_size_mb": 32,
+    "cpu_memory_limit_mb": 2048,
+    "enable_simd": true,
+    "use_multiprocessing": true
+  },
+  
+  "debugging": {
+    "enable_debug_logging": false,
+    "gpu_kernel_timing": false,
+    "memory_leak_detection": false,
+    "operation_profiling": false,
+    "save_intermediate_results": false,
+    "debug_output_directory": "./debug_gpu"
+  },
+  
+  "experimental_features": {
+    "enable_experimental": false,
+    "mixed_precision": false,
+    "tensor_cores": false,
+    "multi_gpu": false,
+    "gpu_direct_storage": false,
+    "custom_kernels": false
+  },
+  
+  "device_specific": {
+    "nvidia": {
+      "enable_tensorrt": false,
+      "use_cublas": true,
+      "enable_nvjpeg": true,
+      "cuda_graphs": false
+    },
+    "amd": {
+      "use_rocblas": true,
+      "enable_hip": true,
+      "rocm_optimization": true
+    },
+    "intel": {
+      "use_mkl": true,
+      "enable_oneapi": false,
+      "intel_extension": false
+    }
+  },
+  
+  "file_type_specific": {
+    "images": {
+      "jpeg": {
+        "gpu_decode": true,
+        "quality_analysis": true,
+        "color_space_conversion": true
+      },
+      "png": {
+        "gpu_decode": true,
+        "transparency_handling": true,
+        "compression_analysis": false
+      },
+      "raw": {
+        "gpu_processing": false,
+        "metadata_only": true,
+        "thumbnail_generation": false
+      }
+    },
+    "videos": {
+      "enable_gpu_decode": true,
+      "thumbnail_frames": [0.1, 0.5, 0.9],
+      "metadata_extraction": true,
+      "duration_analysis": true
+    },
+    "documents": {
+      "pdf_gpu_rendering": false,
+      "text_extraction_gpu": false,
+      "thumbnail_quality": 150
+    }
+  },
+  
+  "quality_settings": {
+    "image_quality": {
+      "thumbnail_interpolation": "lanczos",
+      "preserve_aspect_ratio": true,
+      "auto_orientation": true,
+      "color_profile_preservation": false
+    },
+    "processing_quality": {
+      "precision": "fp32",
+      "error_tolerance": 1e-6,
+      "validation_enabled": true,
+      "checksums_verify": true
+    }
+  },
+  
+  "resource_limits": {
+    "max_processing_time_minutes": 30,
+    "max_file_size_gb": 2.0,
+    "max_memory_per_file_mb": 512,
+    "temp_storage_limit_gb": 5.0,
+    "concurrent_operations_limit": 10
+  },
+  
+  "auto_tuning": {
+    "enable_auto_tuning": true,
+    "learning_rate": 0.1,
+    "adaptation_frequency": 100,
+    "performance_history_size": 1000,
+    "auto_adjust_batch_size": true,
+    "auto_adjust_chunk_size": true,
+    "workload_profiling": true
+  }
+}
