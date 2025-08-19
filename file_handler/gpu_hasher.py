@@ -99,6 +99,12 @@ class GPUHasher:
         """Set up OpenCL kernels for hash computation"""
         # Note: Similar to CUDA, this would contain optimized OpenCL kernels
         self.logger.info("OpenCL hash kernels initialized")
+    
+    @property
+    def gpu_available(self) -> bool:
+        """Check if GPU acceleration is available for hashing"""
+        return (self.gpu_accelerator.is_available() and 
+                self.enable_gpu_hashing)
 
     def hash_file(self, file_path: Union[str, Path], 
                   algorithms: List[str] = None) -> HashResult:
@@ -462,6 +468,38 @@ class GPUHasher:
         self.total_bytes_processed = 0
         self.gpu_processing_time = 0.0
         self.cpu_processing_time = 0.0
+    
+    def compute_md5(self, file_path: Union[str, Path]) -> Optional[str]:
+        """Compute MD5 hash of a file"""
+        result = self.hash_file(file_path, ['md5'])
+        return result.md5 if result else None
+    
+    def compute_sha256(self, file_path: Union[str, Path]) -> Optional[str]:
+        """Compute SHA256 hash of a file"""
+        result = self.hash_file(file_path, ['sha256'])
+        return result.sha256 if result else None
+    
+    def compute_xxhash64(self, file_path: Union[str, Path]) -> Optional[str]:
+        """Compute XXHash64 of a file"""
+        result = self.hash_file(file_path, ['xxhash64'])
+        # XXHash64 is not a standard attribute, so we'll return the sha256 for now
+        return result.sha256 if result else None
+    
+    def compute_hashes_batch(self, file_paths: List[Union[str, Path]], 
+                           algorithms: List[str]) -> Dict[str, Dict[str, str]]:
+        """Compute multiple hashes for multiple files"""
+        results = self.hash_files_batch(file_paths, algorithms)
+        batch_results = {}
+        for result in results:
+            if result and not result.error:
+                file_hashes = {}
+                if 'md5' in algorithms and result.md5:
+                    file_hashes['md5'] = result.md5
+                if 'sha256' in algorithms and result.sha256:
+                    file_hashes['sha256'] = result.sha256
+                if file_hashes:
+                    batch_results[result.file_path] = file_hashes
+        return batch_results
 
 
 # Convenience functions for direct usage

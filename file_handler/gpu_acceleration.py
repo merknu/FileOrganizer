@@ -411,6 +411,10 @@ class GPUAccelerator:
     def get_device_info(self) -> Optional[GPUDevice]:
         """Get current GPU device information"""
         return self.device
+    
+    def get_backend(self) -> GPUBackend:
+        """Get current GPU backend in use"""
+        return self.backend
 
     def get_memory_usage(self) -> Tuple[int, int]:
         """Get current GPU memory usage (used, total) in MB"""

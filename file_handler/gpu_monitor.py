@@ -707,6 +707,46 @@ class GPUMonitor:
         
         return status
 
+    def get_current_metrics(self) -> Dict[str, Any]:
+        """Get current GPU and system metrics"""
+        current_metrics = {
+            'system': None,
+            'gpu': [],
+            'timestamp': datetime.now().isoformat()
+        }
+        
+        # Get latest system metrics
+        if self.system_metrics_history:
+            current_metrics['system'] = asdict(self.system_metrics_history[-1])
+        
+        # Get latest GPU metrics
+        if self.gpu_metrics_history:
+            current_metrics['gpu'] = [asdict(m) for m in list(self.gpu_metrics_history)[-1:]]
+        
+        return current_metrics
+    
+    def get_metrics_history(self, hours: int = 1) -> Dict[str, Any]:
+        """Get historical metrics for specified time period"""
+        cutoff_time = datetime.now() - timedelta(hours=hours)
+        
+        history = {
+            'system_metrics': [],
+            'gpu_metrics': [],
+            'time_range_hours': hours
+        }
+        
+        # Filter system metrics by time
+        for metric in self.system_metrics_history:
+            if datetime.fromisoformat(metric.timestamp) > cutoff_time:
+                history['system_metrics'].append(asdict(metric))
+        
+        # Filter GPU metrics by time  
+        for metric in self.gpu_metrics_history:
+            if datetime.fromisoformat(metric.timestamp) > cutoff_time:
+                history['gpu_metrics'].append(asdict(metric))
+        
+        return history
+
     def get_performance_summary(self, hours: int = 24) -> Dict[str, Any]:
         """Get performance summary for specified time period"""
         cutoff_time = datetime.now() - timedelta(hours=hours)

@@ -282,6 +282,62 @@ class GPUImageProcessor:
         
         return result
 
+    def process_image(self, image_path: Union[str, Path], 
+                     extract_metadata: bool = True,
+                     generate_thumbnail: bool = False,
+                     thumbnail_path: Optional[Union[str, Path]] = None) -> Dict:
+        """
+        Process a single image with metadata extraction and optional thumbnail generation
+        
+        Args:
+            image_path: Path to the image file
+            extract_metadata: Whether to extract metadata
+            generate_thumbnail: Whether to generate thumbnail
+            thumbnail_path: Path for thumbnail output
+        
+        Returns:
+            Dictionary containing processing results
+        """
+        image_path = Path(image_path)
+        result = {
+            'image_path': str(image_path),
+            'metadata': None,
+            'thumbnail_path': None,
+            'error': None
+        }
+        
+        try:
+            # Extract metadata if requested
+            if extract_metadata:
+                metadata_result = self.extract_metadata(image_path)
+                if metadata_result.error:
+                    result['error'] = metadata_result.error
+                else:
+                    result['metadata'] = {
+                        'width': metadata_result.width,
+                        'height': metadata_result.height,
+                        'format': metadata_result.format,
+                        'file_size': metadata_result.file_size,
+                        'exif': metadata_result.exif,
+                        'gps_coords': metadata_result.gps_coords,
+                        'creation_date': metadata_result.creation_date
+                    }
+            
+            # Generate thumbnail if requested
+            if generate_thumbnail and thumbnail_path:
+                thumbnail_result = self.generate_thumbnail(image_path, Path(thumbnail_path))
+                if thumbnail_result.error:
+                    if not result['error']:
+                        result['error'] = thumbnail_result.error
+                else:
+                    result['thumbnail_path'] = thumbnail_result.thumbnail_path
+                    
+        except Exception as e:
+            result['error'] = str(e)
+            self.logger.error(f"Error processing image {image_path}: {e}")
+        
+        return result
+
     def process_images_batch(self, image_paths: List[Union[str, Path]],
                            extract_metadata: bool = True,
                            generate_thumbnails: bool = False,

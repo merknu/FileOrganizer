@@ -43,7 +43,14 @@ import logging
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Import test utilities
-from tests.conftest import create_test_file
+try:
+    from tests.conftest import create_test_file
+except ImportError:
+    # Fallback test file creation
+    def create_test_file(filepath, size=1024):
+        """Create test file with specified size"""
+        with open(filepath, 'wb') as f:
+            f.write(os.urandom(size))
 
 # Try importing required modules
 try:
