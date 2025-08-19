@@ -25,13 +25,19 @@ def load_config(config_file: str) -> Optional[Dict[str, Any]]:
         return None
 
 
-def handle_duplicate(src: str, dest: str, default_action: str) -> str:
+def handle_duplicate(src: str, dest: str, default_action: str, gui_mode: bool = True) -> str:
     """Handle duplicate files with user interaction."""
     try:
-        action = input(f"Duplicate file detected: {src}\n"
-                      f"Destination: {dest}\n"
-                      f"Options: (k)eep, (o)verwrite, (r)ename [default: {default_action}]: ")
-        return action.lower() if action else default_action
+        if gui_mode:
+            # In GUI mode, use default action to avoid blocking
+            logging.info(f"Duplicate file detected in GUI mode: {src} -> {dest}, using default: {default_action}")
+            return default_action
+        else:
+            # Console mode with user input
+            action = input(f"Duplicate file detected: {src}\n"
+                          f"Destination: {dest}\n"
+                          f"Options: (k)eep, (o)verwrite, (r)ename [default: {default_action}]: ")
+            return action.lower() if action else default_action
     except (EOFError, KeyboardInterrupt):
         logging.info("User interrupted duplicate handling, using default action")
         return default_action
@@ -165,7 +171,8 @@ def organize_files(folder: str, app_config: Dict[str, Any], recursive: bool = Fa
                 try:
                     if calculate_file_hash(src) == calculate_file_hash(dest):
                         default_action = app_config.get("default_duplicate_action", "k")
-                        action = handle_duplicate(src, dest, default_action)
+                        # Always use GUI mode when called from GUI
+                        action = handle_duplicate(src, dest, default_action, gui_mode=True)
                         
                         if action == "r":
                             base_name, ext = os.path.splitext(file)

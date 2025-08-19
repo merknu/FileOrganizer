@@ -1,11 +1,8 @@
 # Path: main.py
 import sys
-import time
 import logging
-from PyQt5.QtWidgets import QApplication, QMainWindow, QAction, QMenuBar
-from watchdog.observers import Observer
+from PyQt5.QtWidgets import QApplication, QMainWindow, QAction
 from config.config_handler import ConfigHandler
-from event.file_organizer_event import FileOrganizerEventHandler
 from gui.main_window import FileOrganizerMainWindow
 from gui.photo_transfer_window import PhotoTransferWindow
 
@@ -16,26 +13,6 @@ logging.basicConfig(filename='file_organizer.log', level=logging.INFO,
 CONFIG_FILE = 'config/config.json'
 config_handler = ConfigHandler(CONFIG_FILE)
 global_app_config = config_handler.config
-
-
-def process_folders(folders, app_config, preview_mode=False):
-    observers = []
-    for folder in folders:
-        event_handler = FileOrganizerEventHandler(folder, app_config, preview_mode=preview_mode)
-        observer = Observer()
-        observer.schedule(event_handler, folder, recursive=False)
-        observer.start()
-        observers.append(observer)
-        if preview_mode and hasattr(main_window, 'preview_text_edit'):
-            main_window.preview_text_edit.append(f"Organized folder: {folder}")
-    try:
-        while True:
-            time.sleep(1)
-    except KeyboardInterrupt:
-        for observer in observers:
-            observer.stop()
-    for observer in observers:
-        observer.join()
 
 
 class MainApplication(QMainWindow):
@@ -66,13 +43,13 @@ class MainApplication(QMainWindow):
         exit_action.triggered.connect(self.close)
         file_menu.addAction(exit_action)
         
-        # Show initial window
-        self.file_organizer = FileOrganizerMainWindow(global_app_config, process_folders)
+        # Show initial window with correct parameters
+        self.file_organizer = FileOrganizerMainWindow(global_app_config)
         self.setCentralWidget(self.file_organizer)
     
     def open_file_organizer(self):
         """Open the file organizer window"""
-        self.file_organizer = FileOrganizerMainWindow(global_app_config, process_folders)
+        self.file_organizer = FileOrganizerMainWindow(global_app_config)
         self.setCentralWidget(self.file_organizer)
     
     def open_photo_transfer(self):

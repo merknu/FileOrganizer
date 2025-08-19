@@ -5,8 +5,11 @@ from hashlib import sha256
 
 # Move files from the source folder to the destination folder
 def move_file(src, dest):
+    # Get timestamps before moving the file
+    stat_info = os.stat(src)
     shutil.move(src, dest)
-    preserve_timestamps(src, dest)
+    # Preserve timestamps after move
+    os.utime(dest, (stat_info.st_atime, stat_info.st_mtime))
 
 # Preserve the timestamps of the files from the source folder to the destination folder
 def preserve_timestamps(src, dest):

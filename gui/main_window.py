@@ -54,6 +54,7 @@ class FileOrganizerMainWindow(QMainWindow):
         self.init_ui()
         self.setup_logging()
         self.connect_signals()
+        self.validate_ui_components()
     
     def setup_logging(self):
         """Setup logging for the main window."""
@@ -259,17 +260,55 @@ class FileOrganizerMainWindow(QMainWindow):
     
     def connect_signals(self):
         """Connect custom signals."""
-        self.status_update.connect(self.update_status_message)
-        self.progress_update.connect(self.update_progress)
+        try:
+            self.status_update.connect(self.update_status_message)
+            self.progress_update.connect(self.update_progress)
+        except Exception as e:
+            self.logger.error(f"Error connecting signals: {e}")
+    
+    def validate_ui_components(self):
+        """Validate that all critical UI components are initialized."""
+        critical_components = [
+            ('select_folders_button', self.select_folders_button),
+            ('start_processing_button', self.start_processing_button),
+            ('preview_button', self.preview_button),
+            ('stop_button', self.stop_button),
+            ('status_label', self.status_label),
+            ('progress_bar', self.progress_bar),
+            ('recursive_checkbox', self.recursive_checkbox),
+            ('preview_text_edit', self.preview_text_edit),
+            ('before_text_edit', self.before_text_edit),
+            ('after_text_edit', self.after_text_edit)
+        ]
+        
+        missing_components = []
+        for name, component in critical_components:
+            if component is None:
+                missing_components.append(name)
+                self.logger.error(f"Critical UI component not initialized: {name}")
+        
+        if missing_components:
+            error_msg = f"Missing UI components: {', '.join(missing_components)}"
+            self.logger.error(error_msg)
+            # Try to show error message if possible
+            try:
+                QMessageBox.critical(self, "UI Initialization Error", error_msg)
+            except:
+                pass
     
     def update_button_states(self):
         """Update button enabled/disabled states."""
         has_folders = len(self.selected_folders) > 0
         
-        self.preview_button.setEnabled(has_folders and not self.is_processing)
-        self.start_processing_button.setEnabled(has_folders and not self.is_processing)
-        self.stop_button.setEnabled(self.is_processing)
-        self.select_folders_button.setEnabled(not self.is_processing)
+        # Safely update button states with None checks
+        if self.preview_button:
+            self.preview_button.setEnabled(has_folders and not self.is_processing)
+        if self.start_processing_button:
+            self.start_processing_button.setEnabled(has_folders and not self.is_processing)
+        if self.stop_button:
+            self.stop_button.setEnabled(self.is_processing)
+        if self.select_folders_button:
+            self.select_folders_button.setEnabled(not self.is_processing)
     
     def on_select_folders_button_clicked(self):
         """Handle folder selection."""
@@ -331,11 +370,21 @@ class FileOrganizerMainWindow(QMainWindow):
             self.show_warning_message("No folders selected", "Please select folders first.")
             return
         
+        # Validate UI elements exist
+        if not self.recursive_checkbox or not self.progress_bar:
+            self.show_error_message("UI Error", "UI components not properly initialized.")
+            return
+        
         try:
             self.is_processing = True
             self.update_button_states()
             self.progress_bar.setVisible(True)
             self.status_update.emit("Generating preview...")
+            
+            # Stop any existing thread
+            if self.processing_thread and self.processing_thread.isRunning():
+                self.processing_thread.stop()
+                self.processing_thread.wait(1000)
             
             # Start processing thread in preview mode
             self.processing_thread = ProcessingThread(
@@ -346,8 +395,17 @@ class FileOrganizerMainWindow(QMainWindow):
                 callback=self.on_file_processed
             )
             
+            # Validate thread was created successfully
+            if self.processing_thread is None:
+                raise Exception("Failed to create processing thread")
+            
+            # Connect signals
             self.processing_thread.processing_finished.connect(self.on_preview_finished)
             self.processing_thread.error_occurred.connect(self.on_error_occurred)
+            self.processing_thread.file_processed.connect(self.on_file_processed_signal)
+            self.processing_thread.status_changed.connect(self.update_status_message)
+            
+            # Start the thread
             self.processing_thread.start()
             
             # Start update timer
@@ -357,12 +415,18 @@ class FileOrganizerMainWindow(QMainWindow):
             self.logger.error(f"Error starting preview: {e}")
             self.show_error_message("Preview Error", str(e))
             self.is_processing = False
+            self.progress_bar.setVisible(False) if self.progress_bar else None
             self.update_button_states()
     
     def on_start_processing_button_clicked(self):
         """Handle start processing button click."""
         if not self.selected_folders:
             self.show_warning_message("No folders selected", "Please select folders first.")
+            return
+        
+        # Validate UI elements exist
+        if not self.recursive_checkbox or not self.progress_bar:
+            self.show_error_message("UI Error", "UI components not properly initialized.")
             return
         
         # Confirm action
@@ -383,6 +447,11 @@ class FileOrganizerMainWindow(QMainWindow):
             self.processed_files_count = 0
             self.status_update.emit("Processing files...")
             
+            # Stop any existing thread
+            if self.processing_thread and self.processing_thread.isRunning():
+                self.processing_thread.stop()
+                self.processing_thread.wait(1000)
+            
             # Start processing thread
             self.processing_thread = ProcessingThread(
                 folders=self.selected_folders,
@@ -392,8 +461,17 @@ class FileOrganizerMainWindow(QMainWindow):
                 callback=self.on_file_processed
             )
             
+            # Validate thread was created successfully
+            if self.processing_thread is None:
+                raise Exception("Failed to create processing thread")
+            
+            # Connect signals
             self.processing_thread.processing_finished.connect(self.on_processing_finished)
             self.processing_thread.error_occurred.connect(self.on_error_occurred)
+            self.processing_thread.file_processed.connect(self.on_file_processed_signal)
+            self.processing_thread.status_changed.connect(self.update_status_message)
+            
+            # Start the thread
             self.processing_thread.start()
             
             # Start update timer
@@ -403,59 +481,81 @@ class FileOrganizerMainWindow(QMainWindow):
             self.logger.error(f"Error starting processing: {e}")
             self.show_error_message("Processing Error", str(e))
             self.is_processing = False
+            self.progress_bar.setVisible(False) if self.progress_bar else None
             self.update_button_states()
     
     def on_stop_button_clicked(self):
         """Handle stop button click."""
-        if self.processing_thread and self.processing_thread.isRunning():
-            reply = QMessageBox.question(
-                self, "Confirm Stop",
-                "Are you sure you want to stop processing?",
-                QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.No
-            )
-            
-            if reply == QMessageBox.Yes:
-                self.processing_thread.stop()
-                self.status_update.emit("Stopping...")
+        try:
+            if self.processing_thread and self.processing_thread.isRunning():
+                reply = QMessageBox.question(
+                    self, "Confirm Stop",
+                    "Are you sure you want to stop processing?",
+                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.No
+                )
+                
+                if reply == QMessageBox.Yes:
+                    self.processing_thread.stop()
+                    self.status_update.emit("Stopping...")
+        except Exception as e:
+            self.logger.error(f"Error stopping processing: {e}")
+            self.show_error_message("Stop Error", f"Error stopping processing: {str(e)}")
     
     def on_file_processed(self):
         """Handle file processed callback."""
         self.processed_files_count += 1
+    
+    def on_file_processed_signal(self, filename: str):
+        """Handle file processed signal from thread."""
+        self.processed_files_count += 1
+        if self.status_bar:
+            self.status_bar.showMessage(f"Processing: {filename}")
     
     def on_preview_finished(self, summary: Dict[str, Any]):
         """Handle preview completion."""
         try:
             self.is_processing = False
             self.update_button_states()
-            self.progress_bar.setVisible(False)
+            if self.progress_bar:
+                self.progress_bar.setVisible(False)
             self.update_timer.stop()
             
             # Display preview results
-            preview_text = "Preview Results:\n\n"
-            for key, value in summary.items():
-                preview_text += f"{key.replace('_', ' ').title()}: {value}\n"
+            if summary:
+                preview_text = "Preview Results:\n\n"
+                for key, value in summary.items():
+                    preview_text += f"{key.replace('_', ' ').title()}: {value}\n"
+            else:
+                preview_text = "No preview results available.\n"
             
-            self.preview_text_edit.setPlainText(preview_text)
+            if self.preview_text_edit:
+                self.preview_text_edit.setPlainText(preview_text)
             self.status_update.emit("Preview completed")
             
         except Exception as e:
             self.logger.error(f"Error handling preview completion: {e}")
+            self.show_error_message("Preview Error", f"Error displaying preview results: {str(e)}")
     
     def on_processing_finished(self, summary: Dict[str, Any]):
         """Handle processing completion."""
         try:
             self.is_processing = False
             self.update_button_states()
-            self.progress_bar.setVisible(False)
+            if self.progress_bar:
+                self.progress_bar.setVisible(False)
             self.update_timer.stop()
             
             # Display results
-            result_text = "Processing Results:\n\n"
-            for key, value in summary.items():
-                result_text += f"{key.replace('_', ' ').title()}: {value}\n"
+            if summary:
+                result_text = "Processing Results:\n\n"
+                for key, value in summary.items():
+                    result_text += f"{key.replace('_', ' ').title()}: {value}\n"
+            else:
+                result_text = "No processing results available.\n"
             
-            self.after_text_edit.setPlainText(result_text)
+            if self.after_text_edit:
+                self.after_text_edit.setPlainText(result_text)
             self.status_update.emit("Processing completed successfully")
             
             # Show completion message
@@ -466,17 +566,27 @@ class FileOrganizerMainWindow(QMainWindow):
             
         except Exception as e:
             self.logger.error(f"Error handling processing completion: {e}")
+            self.show_error_message("Processing Error", f"Error displaying processing results: {str(e)}")
     
     def on_error_occurred(self, error_message: str):
         """Handle error from processing thread."""
-        self.is_processing = False
-        self.update_button_states()
-        self.progress_bar.setVisible(False)
-        self.update_timer.stop()
-        
-        self.logger.error(f"Processing error: {error_message}")
-        self.show_error_message("Processing Error", error_message)
-        self.status_update.emit(f"Error: {error_message}")
+        try:
+            self.is_processing = False
+            self.update_button_states()
+            if self.progress_bar:
+                self.progress_bar.setVisible(False)
+            self.update_timer.stop()
+            
+            self.logger.error(f"Processing error: {error_message}")
+            self.show_error_message("Processing Error", error_message)
+            self.status_update.emit(f"Error: {error_message}")
+        except Exception as e:
+            self.logger.error(f"Error handling error: {e}")
+            # Fallback error handling
+            try:
+                QMessageBox.critical(self, "Critical Error", f"Multiple errors occurred: {error_message}")
+            except:
+                pass  # Last resort - prevent infinite error loops
     
     def update_status_message(self, message: str):
         """Update status message."""
@@ -489,11 +599,14 @@ class FileOrganizerMainWindow(QMainWindow):
     
     def update_ui(self):
         """Periodic UI update."""
-        if self.is_processing:
-            # Update progress based on processed files
-            if self.total_files_count > 0:
-                progress = min(100, int((self.processed_files_count / self.total_files_count) * 100))
-                self.progress_update.emit(progress)
+        try:
+            if self.is_processing:
+                # Update progress based on processed files
+                if self.total_files_count > 0:
+                    progress = min(100, int((self.processed_files_count / self.total_files_count) * 100))
+                    self.progress_update.emit(progress)
+        except Exception as e:
+            self.logger.warning(f"Error in periodic UI update: {e}")
     
     def show_error_message(self, title: str, message: str):
         """Show error message dialog."""
@@ -555,21 +668,29 @@ class FileOrganizerMainWindow(QMainWindow):
     
     def closeEvent(self, event):
         """Handle application close event."""
-        if self.is_processing:
-            reply = QMessageBox.question(
-                self, "Confirm Exit",
-                "Processing is currently running. Are you sure you want to exit?",
-                QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.No
-            )
+        try:
+            if self.is_processing:
+                reply = QMessageBox.question(
+                    self, "Confirm Exit",
+                    "Processing is currently running. Are you sure you want to exit?",
+                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.No
+                )
+                
+                if reply != QMessageBox.Yes:
+                    event.ignore()
+                    return
+                
+                # Stop processing thread
+                if self.processing_thread and self.processing_thread.isRunning():
+                    self.processing_thread.stop()
+                    self.processing_thread.wait(3000)  # Wait up to 3 seconds
             
-            if reply != QMessageBox.Yes:
-                event.ignore()
-                return
+            # Stop timers
+            if hasattr(self, 'update_timer') and self.update_timer:
+                self.update_timer.stop()
             
-            # Stop processing thread
-            if self.processing_thread and self.processing_thread.isRunning():
-                self.processing_thread.stop()
-                self.processing_thread.wait(3000)  # Wait up to 3 seconds
-        
-        event.accept()
+            event.accept()
+        except Exception as e:
+            self.logger.error(f"Error during close event: {e}")
+            event.accept()  # Accept anyway to prevent hanging

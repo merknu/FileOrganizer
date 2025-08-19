@@ -57,8 +57,11 @@ class ProcessingThread(QThread):
     
     def stop(self):
         """Request the thread to stop processing."""
-        with QMutex():
+        self._mutex.lock()
+        try:
             self._stop_requested = True
+        finally:
+            self._mutex.unlock()
         self.logger.info("Stop requested for processing thread")
     
     def is_stop_requested(self) -> bool:
@@ -102,7 +105,7 @@ class ProcessingThread(QThread):
             progress = min(100, int((self.processed_files / self.total_files) * 100))
             self.progress_changed.emit(progress)
         
-        if self.callback:
+        if self.callback and callable(self.callback):
             try:
                 self.callback()
             except Exception as e:
@@ -133,13 +136,22 @@ class ProcessingThread(QThread):
                     raise InterruptedError("Processing stopped by user")
             
             # Call the organize_files function with correct signature
-            folder_summary = organize_files(
-                folder=folder,
-                app_config=self.app_config,
-                recursive=self.recursive,
-                preview_mode=self.preview_mode,
-                callback=folder_callback
-            )
+            try:
+                folder_summary = organize_files(
+                    folder=folder,
+                    app_config=self.app_config,
+                    recursive=self.recursive,
+                    preview_mode=self.preview_mode,
+                    callback=folder_callback
+                )
+                
+                # Ensure we have a valid summary
+                if not isinstance(folder_summary, dict):
+                    folder_summary = {"error": 1, "error_message": "Invalid summary returned"}
+                    
+            except TypeError as e:
+                self.logger.error(f"Function signature error for {folder}: {e}")
+                folder_summary = {"error": 1, "error_message": f"Function call error: {str(e)}"}
             
             self.logger.info(f"Processed folder {folder}: {folder_summary}")
             return folder_summary
@@ -212,10 +224,15 @@ class ProcessingThread(QThread):
         except Exception as e:
             self.logger.error(f"Unexpected error in processing thread: {e}")
             self.error_occurred.emit(f"Unexpected error: {str(e)}")
+            # Add error to summary
+            self.summary["unexpected_errors"] += 1
             
         finally:
             # Always emit the finished signal with summary
-            self.processing_finished.emit(dict(self.summary))
+            final_summary = dict(self.summary)
+            if not final_summary:
+                final_summary = {"no_results": 1}
+            self.processing_finished.emit(final_summary)
             self.logger.info("Processing thread finished")
     
     def get_progress_info(self) -> Dict[str, Any]:

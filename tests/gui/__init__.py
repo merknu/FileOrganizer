@@ -1,0 +1,1 @@
+"""GUI tests for FileOrganizer PyQt5 components."""
