@@ -729,7 +729,9 @@ class FileOrganizerMainWindow(QMainWindow):
     
     def create_dock_widgets(self):
         """Create dockable widgets for enhanced features."""
-        if not ENHANCED_WIDGETS_AVAILABLE:
+        # Use global variable with explicit check
+        global ENHANCED_WIDGETS_AVAILABLE
+        if not globals().get('ENHANCED_WIDGETS_AVAILABLE', False):
             return
             
         try:
