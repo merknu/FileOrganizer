@@ -70,40 +70,63 @@ FileOrganizer is a powerful Python-based application designed to automate the or
   - `gpu_benchmark.py`: GPU performance testing
   - `opencl_hash_benchmark.py`: Hash performance comparison
 
-## 📦 Installation
+## 🚀 SUPER EASY INSTALLATION
 
-### Prerequisites
+### ONE-CLICK INSTALL (Recommended)
+
+**Windows Users:** Double-click `START_HERE.bat` ✨  
+**Linux/Mac Users:** Double-click `start_here.sh` or run `./start_here.sh` ✨
+
+That's it! The script automatically:
+- ✅ Checks Python installation
+- ✅ Creates virtual environment
+- ✅ Installs all dependencies
+- ✅ Creates desktop shortcuts
+- ✅ Launches FileOrganizer
+
+### Alternative Easy Methods
+
+```bash
+# Interactive installer
+python install.py
+
+# Smart launcher (auto-installs missing deps)
+python run.py
+
+# Portable mode (no installation needed)
+python portable.py
+```
+
+### Traditional Installation (if preferred)
+
+**Prerequisites:**
 - Python 3.8 or higher
 - pip package manager
 
-### GPU Acceleration (Optional)
-For maximum performance with large files:
-- **GPU**: OpenCL-compatible GPU (NVIDIA, AMD, Intel)
-- **Drivers**: Latest GPU drivers with OpenCL support
-- **PyOpenCL**: `pip install pyopencl numpy`
+**GPU Acceleration (Optional):**
+For 10-100x speedup with large files:
+- OpenCL-compatible GPU (NVIDIA, AMD, Intel)
+- Latest GPU drivers with OpenCL support
 
-*GPU acceleration provides 10-100x speedup for file hashing and duplicate detection*
-
-### Quick Install
+**Manual Install:**
 ```bash
 # Clone the repository
 git clone https://github.com/merknu/FileOrganizer.git
 cd FileOrganizer
 
-# Install in development mode
-pip install -e .
+# Create virtual environment (recommended)
+python -m venv venv
+# Windows: venv\Scripts\activate
+# Linux/Mac: source venv/bin/activate
 
-# Or install with all dependencies
-pip install -r requirements.txt
+# Install dependencies (note the -r flag!)
+python -m pip install -r requirements.txt
+
+# Run FileOrganizer
+python main.py
 ```
 
-### Install from Source
-```bash
-# Clone and install
-git clone https://github.com/merknu/FileOrganizer.git
-cd FileOrganizer
-python setup.py install
-```
+**📖 Need help?** See [EASY_INSTALL.md](EASY_INSTALL.md) for detailed instructions and troubleshooting.
 
 ## 🚀 Usage
 
