@@ -677,7 +677,7 @@ class EnhancedMainApplication(QMainWindow):
         # Display moved files
         for file_info in results.get('moved_files', []):
             self.results_widget.add_file_result({
-                'action': 'moved',
+                'action': 'moved ✅',
                 'source': file_info['source'],
                 'destination': file_info['destination'],
                 'size': file_info.get('size', 0)
@@ -694,10 +694,16 @@ class EnhancedMainApplication(QMainWindow):
         
         # Display errors
         for file_info in results.get('error_files', []):
+            error_msg = file_info.get('error', 'Unknown error')
+            if 'verification failed' in error_msg.lower():
+                action = 'verification failed ❌'
+            else:
+                action = 'error ❌'
+                
             self.results_widget.add_file_result({
-                'action': 'error',
+                'action': action,
                 'source': file_info['file'],
-                'destination': file_info.get('error', 'Unknown error'),
+                'destination': error_msg,
                 'size': 0
             })
         

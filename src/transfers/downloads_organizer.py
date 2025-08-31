@@ -523,6 +523,78 @@ class DownloadsOrganizer:
         
         return base_path
     
+    def verify_file_move(self, source_path: Path, destination_path: Path) -> bool:
+        """Verify that a file was successfully moved from source to destination"""
+        try:
+            # Check 1: Destination file exists
+            if not destination_path.exists():
+                print(f"DEBUG: Verification failed - destination file does not exist: {destination_path}")
+                return False
+            
+            # Check 2: Source file no longer exists
+            if source_path.exists():
+                print(f"DEBUG: Verification failed - source file still exists: {source_path}")
+                return False
+            
+            # Check 3: Destination file is actually a file (not directory)
+            if not destination_path.is_file():
+                print(f"DEBUG: Verification failed - destination is not a file: {destination_path}")
+                return False
+            
+            # Check 4: Destination file has reasonable size (> 0 bytes)
+            try:
+                file_size = destination_path.stat().st_size
+                if file_size == 0:
+                    print(f"DEBUG: Warning - destination file has 0 bytes: {destination_path}")
+                    # Don't fail for 0-byte files as they might be legitimate
+                
+                print(f"DEBUG: Verification passed - file moved successfully, size: {file_size} bytes")
+                return True
+                
+            except OSError as e:
+                print(f"DEBUG: Verification failed - cannot stat destination file: {e}")
+                return False
+            
+        except Exception as e:
+            print(f"DEBUG: Verification failed with exception: {e}")
+            return False
+    
+    def diagnose_move_failure(self, source_path: Path, destination_path: Path) -> str:
+        """Diagnose why a file move verification failed"""
+        diagnostics = []
+        
+        try:
+            # Check source file status
+            if source_path.exists():
+                diagnostics.append(f"source file still exists at {source_path}")
+            else:
+                diagnostics.append("source file was removed")
+            
+            # Check destination file status
+            if destination_path.exists():
+                if destination_path.is_file():
+                    file_size = destination_path.stat().st_size
+                    diagnostics.append(f"destination file exists with size {file_size} bytes")
+                else:
+                    diagnostics.append("destination exists but is not a file")
+            else:
+                diagnostics.append(f"destination file missing at {destination_path}")
+            
+            # Check destination directory
+            dest_dir = destination_path.parent
+            if dest_dir.exists():
+                if os.access(dest_dir, os.W_OK):
+                    diagnostics.append("destination directory is writable")
+                else:
+                    diagnostics.append("destination directory is not writable")
+            else:
+                diagnostics.append("destination directory does not exist")
+            
+        except Exception as e:
+            diagnostics.append(f"diagnostic error: {e}")
+        
+        return "; ".join(diagnostics)
+    
     def organize_downloads(self, 
                          recent_only: bool = False,
                          dry_run: bool = False,
@@ -608,13 +680,48 @@ class DownloadsOrganizer:
                 else:
                     # Actually move the file
                     print(f"DEBUG: Moving {file_path} to {destination_path}")
-                    shutil.move(str(file_path), str(destination_path))
-                    self.logger.info(f"Moved {file_path.name} to {destination_folder}")
-                    print(f"DEBUG: Successfully moved {file_path.name}")
                     
-                    results['moved_files'].append(move_info)
-                    results['categories_used'].add(category)
-                    self.organized_count += 1
+                    try:
+                        # Perform the move
+                        shutil.move(str(file_path), str(destination_path))
+                        
+                        # Small delay to ensure file system operations complete
+                        import time
+                        time.sleep(0.1)
+                        
+                        # Verify the move was successful
+                        move_successful = self.verify_file_move(file_path, destination_path)
+                        
+                        if move_successful:
+                            self.logger.info(f"Moved {file_path.name} to {destination_folder}")
+                            print(f"DEBUG: Successfully moved and verified {file_path.name}")
+                            
+                            results['moved_files'].append(move_info)
+                            results['categories_used'].add(category)
+                            self.organized_count += 1
+                        else:
+                            # Move failed verification - try to diagnose the issue
+                            diagnostic_info = self.diagnose_move_failure(file_path, destination_path)
+                            
+                            error_info = {
+                                'file': str(file_path),
+                                'error': f'File move verification failed - {diagnostic_info}'
+                            }
+                            results['error_files'].append(error_info)
+                            self.logger.error(f"Move verification failed for {file_path.name}: {diagnostic_info}")
+                            print(f"DEBUG: VERIFICATION FAILED for {file_path.name}: {diagnostic_info}")
+                            self.error_count += 1
+                            
+                    except Exception as move_error:
+                        # Move operation itself failed
+                        error_info = {
+                            'file': str(file_path),
+                            'error': f'Move operation failed: {str(move_error)}'
+                        }
+                        results['error_files'].append(error_info)
+                        self.logger.error(f"Failed to move {file_path.name}: {move_error}")
+                        print(f"DEBUG: MOVE FAILED for {file_path.name}: {move_error}")
+                        self.error_count += 1
                 
             except Exception as e:
                 error_info = {
