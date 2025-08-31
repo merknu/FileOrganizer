@@ -262,10 +262,11 @@ class EnhancedMainApplication(QMainWindow):
         # Status bar
         self.statusBar().showMessage("Ready")
         
-        # Make sure window stays visible
+        # Make sure window starts visible and stays on top initially
         self.show()
         self.raise_()
         self.activateWindow()
+        self.setWindowState(Qt.WindowActive)
     
     def init_system_tray(self):
         """Initialize system tray icon and menu"""

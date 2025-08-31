@@ -588,6 +588,10 @@ class SystemTrayManager(QSystemTrayIcon):
         self.app = app
         self.scenario_manager = ScenarioManager()
         self.current_executor = None
+        self.main_window = None
+        self.file_organizer = None
+        self.audio_transfer = None
+        self.video_transfer = None
         
         # Settings
         self.settings = QSettings('FileOrganizer', 'SystemTray')
@@ -666,6 +670,11 @@ class SystemTrayManager(QSystemTrayIcon):
         main_action.triggered.connect(self.show_main_window)
         menu.addAction(main_action)
         
+        # Direct transfer managers
+        file_transfer_action = QAction("📁 Advanced File Organizer", self)
+        file_transfer_action.triggered.connect(self.launch_file_organizer)
+        menu.addAction(file_transfer_action)
+        
         # Custom scenarios
         custom_action = QAction("⚙️ Custom Scenario...", self)
         custom_action.triggered.connect(self.show_scenario_dialog)
@@ -721,9 +730,9 @@ class SystemTrayManager(QSystemTrayIcon):
     def on_tray_activated(self, reason):
         """Handle tray icon activation"""
         if reason == QSystemTrayIcon.DoubleClick:
-            self.show_scenario_dialog()
-        elif reason == QSystemTrayIcon.MiddleClick:
             self.show_main_window()
+        elif reason == QSystemTrayIcon.MiddleClick:
+            self.show_scenario_dialog()
     
     def on_message_clicked(self):
         """Handle tray message click"""
@@ -832,18 +841,26 @@ class SystemTrayManager(QSystemTrayIcon):
     def launch_audio_transfer(self):
         """Launch audio transfer tool"""
         try:
-            import subprocess
-            import sys
-            subprocess.Popen([sys.executable, "audio_transfer.py"])
+            from transfers.audio_transfer import AudioTransferWindow
+            if not hasattr(self, 'audio_transfer') or not self.audio_transfer:
+                self.audio_transfer = AudioTransferWindow()
+            
+            self.audio_transfer.show()
+            self.audio_transfer.raise_()
+            self.audio_transfer.activateWindow()
         except Exception as e:
             self.showMessage("Error", f"Failed to launch Audio Transfer: {e}", QSystemTrayIcon.Critical)
     
     def launch_video_transfer(self):
         """Launch video transfer tool"""
         try:
-            import subprocess
-            import sys
-            subprocess.Popen([sys.executable, "video_transfer.py"])
+            from transfers.video_transfer import VideoTransferWindow
+            if not hasattr(self, 'video_transfer') or not self.video_transfer:
+                self.video_transfer = VideoTransferWindow()
+            
+            self.video_transfer.show()
+            self.video_transfer.raise_()
+            self.video_transfer.activateWindow()
         except Exception as e:
             self.showMessage("Error", f"Failed to launch Video Transfer: {e}", QSystemTrayIcon.Critical)
     
@@ -851,14 +868,48 @@ class SystemTrayManager(QSystemTrayIcon):
         """Launch batch transfer dialog"""
         self.showMessage("Batch Transfer", "Batch transfer functionality coming soon!", QSystemTrayIcon.Information)
     
+    def launch_file_organizer(self):
+        """Launch advanced file organizer"""
+        try:
+            from gui.main_window import FileOrganizerMainWindow
+            from config.config_handler import ConfigHandler
+            
+            config_handler = ConfigHandler('config/config.json')
+            if not hasattr(self, 'file_organizer') or not self.file_organizer:
+                self.file_organizer = FileOrganizerMainWindow(config_handler.config)
+            
+            self.file_organizer.show()
+            self.file_organizer.raise_()
+            self.file_organizer.activateWindow()
+        except Exception as e:
+            self.showMessage("Error", f"Failed to launch File Organizer: {e}", QSystemTrayIcon.Critical)
+    
     def show_main_window(self):
         """Show main FileOrganizer window"""
         try:
-            import subprocess
-            import sys
-            subprocess.Popen([sys.executable, "main.py"])
+            # Import and show the enhanced main window
+            if not hasattr(self, 'main_window') or not self.main_window:
+                from core.main_enhanced import EnhancedMainApplication
+                self.main_window = EnhancedMainApplication()
+            
+            # Show and bring to front
+            self.main_window.show()
+            self.main_window.raise_()
+            self.main_window.activateWindow()
+            self.main_window.setWindowState(Qt.WindowActive)
+        except ImportError:
+            # Fallback to regular main window
+            try:
+                from core.main import MainApplication
+                if not hasattr(self, 'main_window') or not self.main_window:
+                    self.main_window = MainApplication()
+                self.main_window.show()
+                self.main_window.raise_()
+                self.main_window.activateWindow()
+            except Exception as e:
+                self.showMessage("Error", f"Failed to show main window: {e}", QSystemTrayIcon.Critical)
         except Exception as e:
-            self.showMessage("Error", f"Failed to launch main window: {e}", QSystemTrayIcon.Critical)
+            self.showMessage("Error", f"Failed to show main window: {e}", QSystemTrayIcon.Critical)
     
     def show_settings(self):
         """Show settings dialog"""

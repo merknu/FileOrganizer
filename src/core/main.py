@@ -402,9 +402,12 @@ if __name__ == "__main__":
     try:
         from main_enhanced import EnhancedMainApplication
         window = EnhancedMainApplication()
-    except ImportError:
+        print("Loaded EnhancedMainApplication")
+    except ImportError as e:
+        print(f"Could not load enhanced version: {e}")
         # Fall back to basic version
         window = MainApplication()
+        print("Loaded basic MainApplication")
     
     window.show()
     sys.exit(app.exec_())
