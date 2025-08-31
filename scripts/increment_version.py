@@ -17,31 +17,15 @@ def get_current_version():
 def increment_version(current_version):
     """Increment version by 0.001"""
     try:
-        # Parse version (e.g., "0.2.001" -> 0.2001)
-        version_float = float(current_version.replace(".", "", 1))
-        
-        # Increment by 0.001
-        new_version_float = version_float + 0.001
-        
-        # Format back to string (e.g., 0.2002 -> "0.2.002")
-        version_str = f"{new_version_float:.3f}"
-        
-        # Ensure proper format with two dots
-        parts = version_str.split(".")
-        if len(parts) == 2:
-            major = parts[0]
-            minor_patch = parts[1].zfill(4)  # Ensure 4 digits after first dot
-            return f"{major}.{minor_patch[0]}.{minor_patch[1:]}"
-        
-        return version_str
-    except:
-        # Fallback: simple increment
+        # Simple increment approach: parse parts and increment patch
         parts = current_version.split(".")
         if len(parts) == 3:
-            major = parts[0]
-            minor = parts[1]
+            major = int(parts[0])
+            minor = int(parts[1])  
             patch = int(parts[2]) + 1
             return f"{major}.{minor}.{patch:03d}"
+        return "0.2.001"
+    except:
         return "0.2.001"
 
 def update_version_file(new_version):
@@ -60,14 +44,17 @@ def update_build_script(new_version):
         import re
         
         # Update filevers and prodvers tuples
+        version_parts = new_version.split(".")
+        version_tuple = f"{int(version_parts[0])}, {int(version_parts[1])}, {int(version_parts[2])}, 0"
+        
         content = re.sub(
             r'filevers=\([0-9, ]+\)',
-            f'filevers=({new_version.replace(".", ", ")}, 0)',
+            f'filevers=({version_tuple})',
             content
         )
         content = re.sub(
             r'prodvers=\([0-9, ]+\)',
-            f'prodvers=({new_version.replace(".", ", ")}, 0)',
+            f'prodvers=({version_tuple})',
             content
         )
         
