@@ -552,10 +552,15 @@ class DownloadsOrganizer:
             self.logger.error(f"Permission denied accessing downloads: {e}")
             return results
         
+        print(f"DEBUG: Processing {len(files)} files from downloads")
+        
         for file_path in files:
             try:
+                print(f"DEBUG: Processing file: {file_path}")
+                
                 # Skip files that match exclude patterns
                 if any(pattern in file_path.name.lower() for pattern in exclude_patterns):
+                    print(f"DEBUG: Skipping {file_path.name} - matches exclude pattern")
                     results['skipped_files'].append({
                         'file': str(file_path),
                         'reason': 'Excluded pattern'
@@ -572,8 +577,10 @@ class DownloadsOrganizer:
                 
                 # Categorize the file
                 category, icon = self.categorize_file(file_path)
+                print(f"DEBUG: File {file_path.name} categorized as: {category}")
                 
                 if category == 'unknown':
+                    print(f"DEBUG: Skipping {file_path.name} - unknown file type")
                     results['skipped_files'].append({
                         'file': str(file_path),
                         'reason': 'Unknown file type'
@@ -583,6 +590,7 @@ class DownloadsOrganizer:
                 # Get destination folder
                 destination_folder = self.folder_manager.get_destination_folder(category)
                 destination_path = self.get_unique_filename(destination_folder, file_path.name)
+                print(f"DEBUG: Destination for {category}: {destination_folder}")
                 
                 # Record the planned move
                 move_info = {
@@ -599,8 +607,10 @@ class DownloadsOrganizer:
                     results['categories_used'].add(category)
                 else:
                     # Actually move the file
+                    print(f"DEBUG: Moving {file_path} to {destination_path}")
                     shutil.move(str(file_path), str(destination_path))
                     self.logger.info(f"Moved {file_path.name} to {destination_folder}")
+                    print(f"DEBUG: Successfully moved {file_path.name}")
                     
                     results['moved_files'].append(move_info)
                     results['categories_used'].add(category)

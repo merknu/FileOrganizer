@@ -347,6 +347,11 @@ class EnhancedMainApplication(QMainWindow):
         # Set splitter sizes (60% top, 40% bottom)
         splitter.setSizes([480, 320])
     
+    def log_activity(self, message: str):
+        """Log activity to the results widget or status bar"""
+        self.statusBar().showMessage(message)
+        print(f"Activity: {message}")  # Also print to console for debugging
+    
     def create_file_org_tab(self):
         """Create enhanced file organization tab"""
         file_tab = QWidget()
@@ -546,12 +551,40 @@ class EnhancedMainApplication(QMainWindow):
         """Organize downloads folder with detailed feedback"""
         if MODULES_AVAILABLE:
             try:
+                self.log_activity("Starting downloads organization...")
                 organizer = DownloadsOrganizer()
-                # TODO: Connect to results display
+                
+                # Show downloads path for debugging
+                downloads_path = organizer.downloads_path
+                self.log_activity(f"Downloads folder: {downloads_path}")
+                
+                # Check if downloads folder exists and has files
+                if not downloads_path.exists():
+                    QMessageBox.warning(self, "Downloads Not Found", 
+                                      f"Downloads folder not found at: {downloads_path}")
+                    return
+                
+                files = list(downloads_path.glob('*'))
+                self.log_activity(f"Found {len(files)} items in downloads folder")
+                
                 results = organizer.organize_downloads(dry_run=False)
+                self.log_activity(f"Organization complete: {len(results.get('moved_files', []))} moved, {len(results.get('skipped_files', []))} skipped")
+                
                 self.display_downloads_results(results)
+                
+                # Show completion message
+                moved_count = len(results.get('moved_files', []))
+                if moved_count > 0:
+                    QMessageBox.information(self, "Organization Complete", 
+                                          f"Successfully organized {moved_count} files!")
+                else:
+                    QMessageBox.information(self, "No Files Moved", 
+                                          "No files were moved. Check the results table for details.")
+                
             except Exception as e:
-                QMessageBox.critical(self, "Error", f"Failed to organize downloads: {str(e)}")
+                error_msg = f"Failed to organize downloads: {str(e)}"
+                self.log_activity(f"ERROR: {error_msg}")
+                QMessageBox.critical(self, "Error", error_msg)
         else:
             # Simulate for demo
             downloads = Path.home() / 'Downloads'
@@ -641,15 +674,44 @@ class EnhancedMainApplication(QMainWindow):
     
     def display_downloads_results(self, results: dict):
         """Display results from DownloadsOrganizer"""
-        # Convert results to our format
-        for category, files in results.get('organized', {}).items():
-            for file_info in files:
-                self.results_widget.add_file_result({
-                    'action': 'moved',
-                    'source': file_info['source'],
-                    'destination': file_info['destination'],
-                    'size': file_info.get('size', 0)
-                })
+        # Display moved files
+        for file_info in results.get('moved_files', []):
+            self.results_widget.add_file_result({
+                'action': 'moved',
+                'source': file_info['source'],
+                'destination': file_info['destination'],
+                'size': file_info.get('size', 0)
+            })
+        
+        # Display skipped files
+        for file_info in results.get('skipped_files', []):
+            self.results_widget.add_file_result({
+                'action': 'skipped',
+                'source': file_info['file'],
+                'destination': file_info.get('reason', 'Unknown reason'),
+                'size': 0
+            })
+        
+        # Display errors
+        for file_info in results.get('error_files', []):
+            self.results_widget.add_file_result({
+                'action': 'error',
+                'source': file_info['file'],
+                'destination': file_info.get('error', 'Unknown error'),
+                'size': 0
+            })
+        
+        # Show summary in status
+        moved_count = len(results.get('moved_files', []))
+        skipped_count = len(results.get('skipped_files', []))
+        error_count = len(results.get('error_files', []))
+        
+        if results.get('dry_run'):
+            summary = f"Preview: {moved_count} files would be moved, {skipped_count} skipped, {error_count} errors"
+        else:
+            summary = f"Completed: {moved_count} files moved, {skipped_count} skipped, {error_count} errors"
+        
+        self.results_widget.set_summary(summary)
     
     def select_videos(self):
         """Select and process video files"""
