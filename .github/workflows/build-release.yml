@@ -37,7 +37,7 @@ jobs:
         
     - name: Build SystemTray executable
       run: |
-        pyinstaller build/FileOrganizer_SystemTray.spec
+        pyinstaller FileOrganizer_SystemTray.spec
 
     - name: Create release directory
       run: |
@@ -80,7 +80,7 @@ jobs:
         
     - name: Build SystemTray executable
       run: |
-        pyinstaller build/FileOrganizer_SystemTray.spec
+        pyinstaller FileOrganizer_SystemTray.spec
 
     - name: Create release directory
       run: |
@@ -118,7 +118,7 @@ jobs:
         
     - name: Build SystemTray executable
       run: |
-        pyinstaller build/FileOrganizer_SystemTray.spec
+        pyinstaller FileOrganizer_SystemTray.spec
 
     - name: Create release directory
       run: |

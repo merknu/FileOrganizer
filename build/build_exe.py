@@ -119,7 +119,7 @@ VSVersionInfo(
         StringStruct(u'FileDescription', u'Advanced File Organization Tool - Alpha'),
         StringStruct(u'FileVersion', u'0.2.0.0'),
         StringStruct(u'InternalName', u'FileOrganizer'),
-        StringStruct(u'LegalCopyright', u'© 2024 FileOrganizer Team'),
+        StringStruct(u'LegalCopyright', u'Copyright 2024 FileOrganizer Team'),
         StringStruct(u'OriginalFilename', u'FileOrganizer.exe'),
         StringStruct(u'ProductName', u'FileOrganizer Alpha'),
         StringStruct(u'ProductVersion', u'0.2.0.0')])
@@ -129,7 +129,7 @@ VSVersionInfo(
 )
 """
         version_file = self.project_root / 'version_info.txt'
-        version_file.write_text(version_info)
+        version_file.write_text(version_info, encoding='utf-8')
         print(f"   Created {version_file}")
     
     def optimize_imports(self):
