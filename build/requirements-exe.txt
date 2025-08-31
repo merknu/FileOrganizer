@@ -1,0 +1,23 @@
+# Requirements for building executable
+# Install with: pip install -r requirements-exe.txt
+
+# Core dependencies (minimal for smaller exe)
+PyQt5>=5.15.0
+watchdog>=2.1.0
+
+# Essential for FileOrganizer features
+mutagen>=1.46.0      # For audio metadata - adds ~5MB  
+Pillow>=10.0.0       # For image processing - adds ~10MB
+winshell>=0.6; sys_platform == 'win32'  # For Windows system folders
+psutil>=5.9.0        # For system information
+pathlib2>=2.3.0      # For enhanced Path support
+
+# Build tools
+pyinstaller>=6.0.0
+pyinstaller-hooks-contrib>=2023.10
+
+# Windows-specific (optional)
+# pywin32>=300; sys_platform == 'win32'
+
+# Compression tool (optional, external)
+# Download UPX from: https://github.com/upx/upx/releases

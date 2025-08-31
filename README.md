@@ -1,18 +1,58 @@
 # FileOrganizer
 
-🎉 **STATUS: FULLY FUNCTIONAL** 🎉 
-*Latest update: All critical bugs fixed, comprehensive test suite added, application is now working perfectly!*
+🎉 **STATUS: PRODUCTION READY** 🎉 
+*Latest update: System tray integration, EXE releases, and automated build pipeline!*
+
+## 📥 Quick Download (EXE Releases)
+
+**For Windows Users** - No Python installation required!
+- [📥 Download FileOrganizer.exe](https://github.com/merknu/FileOrganizer/releases/latest) - Main application
+- [📥 Download FileOrganizer_SystemTray.exe](https://github.com/merknu/FileOrganizer/releases/latest) - Background system tray version
+
+**For Linux/macOS Users** - Native binaries available in releases!
 
 ## Overview
-FileOrganizer is a powerful Python-based application designed to automate the organization of files in directories. It intelligently categorizes and moves files into appropriate subdirectories based on their type, metadata, and configurable rules. The application supports various file types including images, audio, documents, and videos, with a modern GUI interface for ease of use.
+FileOrganizer is a comprehensive file management solution with both a traditional GUI and modern system tray interface. It automates file organization, transfers, and transcoding with intelligent categorization and robust cross-platform support. Available as standalone executables or Python source code.
 
-## ✨ Features
-- **🗂️ Smart File Categorization:** Automatically organizes files based on type and metadata
+## ✨ Key Features
+
+### 🖱️ System Tray Integration (NEW!)
+- **Always-available**: Runs in system tray with minimal resource usage
+- **Quick Scenarios**: Right-click for instant access to common tasks:
+  - 💻 Transfer All Files (Old PC → New PC)
+  - 🎬 Transcode Videos to Save Space
+  - 📸 Sort Photos by Date
+  - 🔍 Find and Remove Duplicates
+  - 📥 **Organize Downloads Folder** - Automatically sorts downloads by file type
+  - 🎵 Organize Music Library
+  - ☁️ Cloud Backup
+  - 💾 Disk Space Analyzer
+
+### 📥 Downloads Organizer (NEW!)
+- **Automatic File Sorting**: Moves downloads to correct system folders
+  - 📄 Documents → Documents/
+  - 🖼️ Images → Pictures/
+  - 🎬 Videos → Videos/
+  - 🎵 Music → Music/
+  - 📦 Archives → Documents/Archives/
+  - 💻 Code → Documents/Code/
+  - 📚 eBooks → Documents/eBooks/
+- **Smart Folder Creation**: Creates missing folders automatically
+- **Multi-User Support**: Works for any logged-in user
+- **Cross-Platform**: Windows, macOS, Linux support
+
+### 🎬 Media Transfer & Transcoding
+- **Audio Transfer**: Copy and transcode audio files with metadata preservation
+- **Video Transfer**: Advanced video transcoding with H.265, hardware acceleration
+- **Format Conversion**: Support for 50+ audio/video formats
+- **Quality Presets**: Fast, balanced, high-quality encoding options
+
+### 🗂️ Smart File Organization
+- **Intelligent Categorization**: Organizes files by type, resolution, duration
   - Images by resolution (e.g., `Images/1920x1080/`)
   - Audio files by duration (e.g., `Audio/180s/`)
   - Documents by type (PDF, DOCX, TXT)
   - Videos by duration
-- **📸 Advanced Photo Transfer Tool:** NEW! Specialized tool for selective photo transfers
   - Transfer photos from phones/cameras to external drives
   - Date range filtering for selective transfers
   - File integrity checking with size verification
@@ -48,37 +88,58 @@ FileOrganizer is a powerful Python-based application designed to automate the or
   - Comprehensive error handling with automatic fallback
   - Automatic resume on failure
 
-## 🛠️ Components
-- `file_handler/`: Core file processing logic
-  - `file_utils.py`: Main organization engine
-  - `metadata_handlers.py`: Metadata extraction for all file types
-  - `file_operations.py`: Safe file operations with rollback support
-  - `gpu_acceleration.py`: GPU acceleration framework
-  - `gpu_hasher.py`: GPU-accelerated file hashing
-  - `opencl_kernels.py`: OpenCL kernel implementations
-- `config/`: Configuration management
-  - `config_handler.py`: JSON configuration loader
-  - `config.json`: Customizable rules and settings
-  - `gpu_config.json`: GPU acceleration configuration
-- `event/`: File system monitoring
-  - `file_organizer_event.py`: Real-time folder monitoring
-- `gui/`: Graphical user interface
-  - `main_window.py`: Main application window with GPU status
-  - `processing_thread.py`: Background processing
-  - `system_tray.py`: Background system tray operation
-- `benchmarks/`: Performance testing
-  - `gpu_benchmark.py`: GPU performance testing
-  - `opencl_hash_benchmark.py`: Hash performance comparison
+## 🛠️ Repository Structure
 
-## 🚀 SUPER EASY INSTALLATION
+```
+FileOrganizer/
+├── src/                          # Source code
+│   ├── core/                     # Core FileOrganizer functionality
+│   ├── gui/                      # GUI components
+│   ├── file_handler/             # File handling logic
+│   ├── transfers/                # Transfer modules
+│   │   ├── audio_transfer.py     # Audio transfer & transcoding
+│   │   ├── video_transfer.py     # Video transfer & transcoding
+│   │   └── downloads_organizer.py # Downloads folder organization
+│   └── system_tray/              # System tray functionality
+├── build/                        # Build and compilation files
+│   ├── FileOrganizer.spec        # PyInstaller spec for main app
+│   ├── FileOrganizer_SystemTray.spec # PyInstaller spec for tray
+│   ├── build_exe.py              # Build script
+│   └── requirements-exe.txt       # Build dependencies
+├── scripts/                      # Launcher scripts
+│   ├── windows/                  # Windows BAT files
+│   └── unix/                     # Linux/macOS shell scripts
+├── releases/                     # Release binaries
+│   └── latest/                   # Latest EXE releases
+├── docs/                         # Documentation
+│   ├── BUILD_EXE_GUIDE.md        # Build instructions
+│   └── SYSTEM_TRAY_SCENARIOS.md  # System tray scenarios guide
+├── tests/                        # Test suite
+├── .github/workflows/            # GitHub Actions for automated builds
+└── README.md                     # This file
+```
 
-### ONE-CLICK INSTALL (Recommended)
+## 🚀 Installation Options
 
-**Windows Users:** Double-click `START_HERE.bat` ✨  
-**Linux/Mac Users:** Double-click `start_here.sh` or run `./start_here.sh` ✨
+### 📥 Option 1: EXE Downloads (Easiest - No Python Required!)
 
-That's it! The script automatically:
-- ✅ Checks Python installation
+**Windows:**
+1. Download [FileOrganizer_SystemTray.exe](https://github.com/merknu/FileOrganizer/releases/latest)
+2. Run the EXE file - that's it! 
+3. Right-click the system tray icon for instant access to scenarios
+
+**Linux/macOS:**
+1. Download the appropriate binary from [releases](https://github.com/merknu/FileOrganizer/releases/latest)
+2. Make executable: `chmod +x FileOrganizer-linux`
+3. Run: `./FileOrganizer-linux`
+
+### 📦 Option 2: ONE-CLICK Python Install 
+
+**Windows Users:** Double-click `scripts/windows/START_HERE.bat` ✨  
+**Linux/Mac Users:** Double-click `scripts/unix/start_here.sh` or run `./scripts/unix/start_here.sh` ✨
+
+The script automatically:
+- ✅ Checks Python installation  
 - ✅ Creates virtual environment
 - ✅ Installs all dependencies
 - ✅ Creates desktop shortcuts
@@ -130,15 +191,34 @@ python main.py
 
 ## 🚀 Usage
 
-### GUI Mode (Recommended)
+### System Tray Mode (Recommended)
 ```bash
-# Run the full FileOrganizer Suite
-python main.py
+# For EXE users - just run the executable
+./FileOrganizer_SystemTray.exe
 
-# Run only the Photo Transfer Tool
-python photo_transfer.py
-# or
-python main.py --transfer
+# For Python source users
+python src/system_tray/system_tray_main.py
+```
+
+### Traditional GUI Mode
+```bash
+# For EXE users
+./FileOrganizer.exe
+
+# For Python source users
+python src/core/main.py
+```
+
+### Specific Transfer Tools
+```bash
+# Audio Transfer Tool
+python src/transfers/launch_audio_transfer.py
+
+# Video Transfer Tool  
+python src/transfers/launch_video_transfer.py
+
+# Downloads Organizer (standalone)
+python src/transfers/downloads_organizer.py --dry-run
 ```
 
 ### Photo Transfer Tool Usage

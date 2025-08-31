@@ -69,6 +69,10 @@ def launch_simple_gui():
                 photo_btn.clicked.connect(self.launch_photo_transfer)
                 btn_layout.addWidget(photo_btn)
                 
+                audio_btn = QPushButton("🎵 Launch Audio Transfer Tool")
+                audio_btn.clicked.connect(self.launch_audio_transfer)
+                btn_layout.addWidget(audio_btn)
+                
                 layout.addLayout(btn_layout)
                 
                 # Log area
@@ -206,6 +210,15 @@ def launch_simple_gui():
                     subprocess.Popen([sys.executable, "photo_transfer.py"])
                 except Exception as e:
                     QMessageBox.critical(self, "Error", f"Failed to launch photo transfer: {e}")
+                    
+            def launch_audio_transfer(self):
+                """Launch audio transfer tool"""
+                try:
+                    self.log("Launching audio transfer tool...")
+                    import subprocess
+                    subprocess.Popen([sys.executable, "audio_transfer.py"])
+                except Exception as e:
+                    QMessageBox.critical(self, "Error", f"Failed to launch audio transfer: {e}")
         
         # Create and run application
         app = QApplication(sys.argv)
@@ -226,6 +239,16 @@ def launch_photo_transfer():
         return True
     except Exception as e:
         print(f"Failed to launch photo transfer: {e}")
+        return False
+
+def launch_audio_transfer():
+    """Launch audio transfer tool directly"""
+    try:
+        print("🎵 Launching Audio Transfer Tool...")
+        import audio_transfer
+        return True
+    except Exception as e:
+        print(f"Failed to launch audio transfer: {e}")
         return False
 
 def main():
@@ -250,10 +273,16 @@ def main():
     if launch_photo_transfer():
         return 0
     
+    # Fallback to audio transfer tool
+    print("🎵 Trying audio transfer tool...")
+    if launch_audio_transfer():
+        return 0
+    
     # Final fallback - command line instructions
     print("\n❌ GUI launch failed. Manual options:")
     print("\nTry these commands:")
     print("  python photo_transfer.py     # Photo transfer tool")
+    print("  python audio_transfer.py     # Audio transfer tool")
     print("  python portable.py          # Portable mode")
     print("  python run.py               # Smart launcher")
     print("\nOr fix the installation:")

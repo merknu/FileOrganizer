@@ -1,0 +1,199 @@
+name: Build and Release FileOrganizer
+
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger on version tags (e.g., v1.0.0)
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r build/requirements-exe.txt
+        pip install pyinstaller
+
+    - name: Install UPX for compression
+      run: |
+        Invoke-WebRequest -Uri "https://github.com/upx/upx/releases/download/v4.2.1/upx-4.2.1-win64.zip" -OutFile "upx.zip"
+        Expand-Archive -Path "upx.zip" -DestinationPath "."
+        Move-Item "upx-4.2.1-win64\upx.exe" "upx.exe"
+
+    - name: Build FileOrganizer executable
+      run: |
+        python build/build_exe.py --no-debug
+        
+    - name: Build SystemTray executable
+      run: |
+        pyinstaller build/FileOrganizer_SystemTray.spec
+
+    - name: Create release directory
+      run: |
+        New-Item -ItemType Directory -Force -Path "releases/latest"
+        Copy-Item "dist/FileOrganizer.exe" "releases/latest/"
+        Copy-Item "dist/FileOrganizer_SystemTray.exe" "releases/latest/"
+
+    - name: Upload Windows artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: fileorganizer-windows
+        path: releases/latest/
+
+  build-linux:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y python3-tk upx-ucl
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r build/requirements-exe.txt
+        pip install pyinstaller
+
+    - name: Build FileOrganizer executable
+      run: |
+        python build/build_exe.py --no-debug
+        
+    - name: Build SystemTray executable
+      run: |
+        pyinstaller build/FileOrganizer_SystemTray.spec
+
+    - name: Create release directory
+      run: |
+        mkdir -p releases/latest
+        cp dist/FileOrganizer releases/latest/FileOrganizer-linux
+        cp dist/FileOrganizer_SystemTray releases/latest/FileOrganizer_SystemTray-linux
+
+    - name: Upload Linux artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: fileorganizer-linux
+        path: releases/latest/
+
+  build-macos:
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r build/requirements-exe.txt
+        pip install pyinstaller
+
+    - name: Build FileOrganizer executable
+      run: |
+        python build/build_exe.py --no-debug
+        
+    - name: Build SystemTray executable
+      run: |
+        pyinstaller build/FileOrganizer_SystemTray.spec
+
+    - name: Create release directory
+      run: |
+        mkdir -p releases/latest
+        cp -r dist/FileOrganizer.app releases/latest/
+        cp -r dist/FileOrganizer_SystemTray.app releases/latest/
+
+    - name: Upload macOS artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: fileorganizer-macos
+        path: releases/latest/
+
+  create-release:
+    needs: [build-windows, build-linux, build-macos]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+
+    - name: Create release notes
+      id: release-notes
+      run: |
+        echo "RELEASE_NOTES<<EOF" >> $GITHUB_OUTPUT
+        echo "## FileOrganizer ${GITHUB_REF#refs/tags/} - Alpha Release 🚀" >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
+        echo "**🎉 First Official Alpha Release!** This is the initial alpha version of FileOrganizer with EXE support." >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
+        echo "### 🚀 Key Features" >> $GITHUB_OUTPUT
+        echo "- **🖱️ System tray integration** - Always available with right-click scenarios" >> $GITHUB_OUTPUT
+        echo "- **📥 Downloads organizer** - Automatically sorts downloads by file type" >> $GITHUB_OUTPUT
+        echo "- **🎬 Media transfer tools** - Audio and video transfer with transcoding" >> $GITHUB_OUTPUT
+        echo "- **🗂️ Smart file organization** - Intelligent categorization by metadata" >> $GITHUB_OUTPUT
+        echo "- **🌐 Cross-platform support** - Windows, Linux, macOS compatibility" >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
+        echo "### ⚠️ Alpha Notice" >> $GITHUB_OUTPUT
+        echo "This is an alpha release for early testing. Expect some rough edges and please report any issues on GitHub." >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
+        echo "### 📥 Downloads" >> $GITHUB_OUTPUT
+        echo "- **Windows**: FileOrganizer.exe, FileOrganizer_SystemTray.exe" >> $GITHUB_OUTPUT
+        echo "- **Linux**: FileOrganizer-linux, FileOrganizer_SystemTray-linux" >> $GITHUB_OUTPUT
+        echo "- **macOS**: FileOrganizer.app, FileOrganizer_SystemTray.app" >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
+        echo "### 🧪 System Requirements" >> $GITHUB_OUTPUT
+        echo "- **Windows**: Windows 10/11 (64-bit)" >> $GITHUB_OUTPUT
+        echo "- **Linux**: Ubuntu 18.04+ or equivalent" >> $GITHUB_OUTPUT
+        echo "- **macOS**: macOS 10.14+ (Mojave)" >> $GITHUB_OUTPUT
+        echo "- **RAM**: 2GB minimum, 4GB recommended" >> $GITHUB_OUTPUT
+        echo "- **Storage**: 500MB free space" >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
+        echo "### 🏃‍♂️ Quick Start" >> $GITHUB_OUTPUT
+        echo "1. Download the appropriate version for your OS" >> $GITHUB_OUTPUT
+        echo "2. Run FileOrganizer_SystemTray for background operation" >> $GITHUB_OUTPUT
+        echo "3. Right-click system tray icon for quick scenarios" >> $GITHUB_OUTPUT
+        echo "4. Or run FileOrganizer for full GUI interface" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        name: FileOrganizer ${{ github.ref_name }} Alpha
+        body: ${{ steps.release-notes.outputs.RELEASE_NOTES }}
+        draft: false
+        prerelease: true
+        files: |
+          fileorganizer-windows/FileOrganizer.exe
+          fileorganizer-windows/FileOrganizer_SystemTray.exe
+          fileorganizer-linux/FileOrganizer-linux
+          fileorganizer-linux/FileOrganizer_SystemTray-linux
+          fileorganizer-macos/FileOrganizer.app
+          fileorganizer-macos/FileOrganizer_SystemTray.app
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -279,6 +279,11 @@ class FileOrganizerGUI:
         photo_btn.clicked.connect(self.launch_photo_transfer_pyqt)
         actions_layout.addWidget(photo_btn)
         
+        audio_btn = QPushButton("🎵 Launch Audio Transfer Tool")
+        audio_btn.setStyleSheet("padding: 12px; font-size: 14px; background: #e67e22; color: white; border-radius: 5px; margin: 3px;")
+        audio_btn.clicked.connect(self.launch_audio_transfer_pyqt)
+        actions_layout.addWidget(audio_btn)
+        
         actions_group.setLayout(actions_layout)
         layout.addWidget(actions_group)
         
@@ -349,11 +354,15 @@ class FileOrganizerGUI:
                              command=self.launch_photo_transfer_tk)
         photo_btn.grid(row=7, column=0, pady=5, sticky=(tk.W, tk.E))
         
+        audio_btn = ttk.Button(main_frame, text="🎵 Launch Audio Transfer Tool", 
+                             command=self.launch_audio_transfer_tk)
+        audio_btn.grid(row=8, column=0, pady=5, sticky=(tk.W, tk.E))
+        
         # Log area
-        ttk.Label(main_frame, text="Activity Log:", font=("Arial", 12)).grid(row=8, column=0, sticky=tk.W, pady=(20,5))
+        ttk.Label(main_frame, text="Activity Log:", font=("Arial", 12)).grid(row=9, column=0, sticky=tk.W, pady=(20,5))
         
         self.log_text = scrolledtext.ScrolledText(main_frame, height=12, width=80)
-        self.log_text.grid(row=9, column=0, columnspan=3, pady=5, sticky=(tk.W, tk.E))
+        self.log_text.grid(row=10, column=0, columnspan=3, pady=5, sticky=(tk.W, tk.E))
         
         # Status
         self.status_var = tk.StringVar(value="Ready to organize files")
@@ -429,6 +438,9 @@ class FileOrganizerGUI:
             
     def launch_photo_transfer_pyqt(self):
         self.launch_photo_transfer()
+        
+    def launch_audio_transfer_pyqt(self):
+        self.launch_audio_transfer()
     
     # Tkinter event handlers
     def browse_folder_tk(self):
@@ -447,6 +459,9 @@ class FileOrganizerGUI:
             
     def launch_photo_transfer_tk(self):
         self.launch_photo_transfer()
+        
+    def launch_audio_transfer_tk(self):
+        self.launch_audio_transfer()
     
     def run_organization(self, preview=True, gui_type=None):
         """Run file organization with error handling"""
@@ -556,6 +571,20 @@ class FileOrganizerGUI:
                 QMessageBox.critical(self.window, "Error", error_msg)
             elif GUI_TYPE == "tkinter":
                 messagebox.showerror("Error", error_msg)
+                
+    def launch_audio_transfer(self):
+        """Launch audio transfer tool"""
+        try:
+            import subprocess
+            self.log("Launching audio transfer tool...")
+            subprocess.Popen([sys.executable, "audio_transfer.py"])
+        except Exception as e:
+            error_msg = f"Failed to launch audio transfer: {e}"
+            self.log(error_msg)
+            if GUI_TYPE == "PyQt5":
+                QMessageBox.critical(self.window, "Error", error_msg)
+            elif GUI_TYPE == "tkinter":
+                messagebox.showerror("Error", error_msg)
     
     def run(self):
         """Run the GUI application"""
@@ -604,6 +633,7 @@ launch_application() {
         "python hotfix_main.py" 
         "python main.py"
         "python photo_transfer.py"
+        "python audio_transfer.py"
         "python portable.py"
         "python run.py"
     )
@@ -626,6 +656,7 @@ launch_application() {
     echo "   source venv/bin/activate"
     echo "   python working_gui.py"
     echo "   python photo_transfer.py"
+    echo "   python audio_transfer.py"
     echo ""
     echo "📋 Check what's available:"
     echo "   python -c 'import PyQt5; print(\"PyQt5: OK\")'"

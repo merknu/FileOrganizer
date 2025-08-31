@@ -278,7 +278,17 @@ if exist "photo_transfer.py" (
     )
 )
 
-REM Method 4: Try portable mode
+REM Method 4: Try audio transfer tool
+echo [LAUNCH] Trying audio transfer tool...
+if exist "audio_transfer.py" (
+    python audio_transfer.py
+    if %errorlevel% equ 0 (
+        echo [SUCCESS] Audio transfer tool launched!
+        goto :end
+    )
+)
+
+REM Method 5: Try portable mode
 echo [LAUNCH] Trying portable mode...
 if exist "portable.py" (
     python portable.py
@@ -288,7 +298,7 @@ if exist "portable.py" (
     )
 )
 
-REM Method 5: Try main GUI (may have the original bug)
+REM Method 6: Try main GUI (may have the original bug)
 echo [LAUNCH] Trying main GUI...
 if exist "main.py" (
     python main.py
@@ -316,6 +326,7 @@ echo.
 echo 3. If GUI fails, try:
 echo    python -c "print('Basic Python working')"
 echo    python photo_transfer.py  # Photo organization
+echo    python audio_transfer.py  # Audio organization
 echo.
 echo 4. Fix GUI issues:
 echo    python -m pip install --upgrade --force-reinstall PyQt5
@@ -326,6 +337,8 @@ if exist "working_gui.py" echo    python working_gui.py
 if exist "hotfix_main.py" echo    python hotfix_main.py
 if exist "portable.py" echo    python portable.py
 if exist "run.py" echo    python run.py
+if exist "photo_transfer.py" echo    python photo_transfer.py
+if exist "audio_transfer.py" echo    python audio_transfer.py
 echo.
 
 :end

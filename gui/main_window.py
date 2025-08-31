@@ -199,6 +199,27 @@ class FileOrganizerMainWindow(QMainWindow):
         toggle_filters_action.triggered.connect(self.toggle_filters_panel)
         view_menu.addAction(toggle_filters_action)
         
+        # Tools menu
+        tools_menu = menubar.addMenu('&Tools')
+        
+        photo_transfer_action = QAction('&Photo Transfer...', self)
+        photo_transfer_action.triggered.connect(self.launch_photo_transfer)
+        tools_menu.addAction(photo_transfer_action)
+        
+        audio_transfer_action = QAction('&Audio Transfer...', self)
+        audio_transfer_action.triggered.connect(self.launch_audio_transfer)
+        tools_menu.addAction(audio_transfer_action)
+        
+        video_transfer_action = QAction('&Video Transfer...', self)
+        video_transfer_action.triggered.connect(self.launch_video_transfer)
+        tools_menu.addAction(video_transfer_action)
+        
+        tools_menu.addSeparator()
+        
+        batch_transfer_action = QAction('&Batch Media Transfer...', self)
+        batch_transfer_action.triggered.connect(self.launch_batch_transfer)
+        tools_menu.addAction(batch_transfer_action)
+        
         # Help menu
         help_menu = menubar.addMenu('&Help')
         
@@ -1072,6 +1093,48 @@ class FileOrganizerMainWindow(QMainWindow):
             "• View Panels (View menu)\n\n"
             "All settings are automatically saved."
         )
+    
+    def launch_photo_transfer(self):
+        """Launch the Photo Transfer tool."""
+        try:
+            from .photo_transfer_window import PhotoTransferWindow
+            self.photo_transfer_window = PhotoTransferWindow()
+            self.photo_transfer_window.show()
+        except Exception as e:
+            self.show_error_message("Launch Error", f"Failed to launch Photo Transfer: {e}")
+    
+    def launch_audio_transfer(self):
+        """Launch the Audio Transfer tool."""
+        try:
+            import subprocess
+            import sys
+            subprocess.Popen([sys.executable, "audio_transfer.py"])
+        except Exception as e:
+            self.show_error_message("Launch Error", f"Failed to launch Audio Transfer: {e}")
+    
+    def launch_video_transfer(self):
+        """Launch the Video Transfer tool."""
+        try:
+            import subprocess
+            import sys
+            subprocess.Popen([sys.executable, "video_transfer.py"])
+        except Exception as e:
+            self.show_error_message("Launch Error", f"Failed to launch Video Transfer: {e}")
+    
+    def launch_batch_transfer(self):
+        """Launch batch media transfer dialog."""
+        try:
+            from .batch_transfer_dialog import BatchTransferDialog
+            dialog = BatchTransferDialog(self)
+            dialog.exec_()
+        except Exception as e:
+            # If batch transfer dialog doesn't exist yet, show message
+            QMessageBox.information(self, "Batch Transfer", 
+                                   "Batch Media Transfer allows you to process multiple media types at once.\n\n"
+                                   "You can launch individual tools from the Tools menu:\n"
+                                   "• Photo Transfer\n"
+                                   "• Audio Transfer (with transcoding)\n"
+                                   "• Video Transfer (with transcoding)")
     
     def show_about_dialog(self):
         """Show about dialog."""
