@@ -396,13 +396,14 @@ class MainApplication(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    app.setApplicationName("FileOrganizer")
     
-    # Check command line arguments
-    if len(sys.argv) > 1 and sys.argv[1] == "--transfer":
-        # Launch photo transfer directly
-        window = PhotoTransferWindow()
-    else:
-        # Launch main application
+    # Import and use enhanced version if available
+    try:
+        from main_enhanced import EnhancedMainApplication
+        window = EnhancedMainApplication()
+    except ImportError:
+        # Fall back to basic version
         window = MainApplication()
     
     window.show()
