@@ -14,7 +14,7 @@ project_root = Path(os.path.abspath(SPECPATH))
 block_cipher = None
 
 a = Analysis(
-    ['system_tray_main.py'],  # System tray entry point
+    ['src/system_tray/system_tray_main.py'],  # System tray entry point
     pathex=[str(project_root)],
     binaries=[
         # Add any binary dependencies here

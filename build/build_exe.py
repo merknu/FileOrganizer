@@ -347,7 +347,7 @@ def main():
     
     if success:
         print("\nBuild completed successfully!")
-        print(f"📁 Output directory: {builder.dist_dir}")
+        print(f"Output directory: {builder.dist_dir}")
     else:
         print("\nBuild failed!")
         sys.exit(1)
