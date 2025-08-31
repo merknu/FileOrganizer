@@ -30,9 +30,6 @@ a = Analysis(
         # Include transfers modules
         ('src/transfers', 'transfers'),
         
-        # Include utils modules
-        ('src/utils', 'utils'),
-        
     ],
     hiddenimports=[
         # PyQt5 modules for GUI and system tray
