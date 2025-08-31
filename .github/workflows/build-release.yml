@@ -33,7 +33,7 @@ jobs:
 
     - name: Build FileOrganizer executable
       run: |
-        python build/build_exe.py --no-debug
+        python build/build_exe.py
         
     - name: Build SystemTray executable
       run: |
@@ -76,7 +76,7 @@ jobs:
 
     - name: Build FileOrganizer executable
       run: |
-        python build/build_exe.py --no-debug
+        python build/build_exe.py
         
     - name: Build SystemTray executable
       run: |
@@ -114,7 +114,7 @@ jobs:
 
     - name: Build FileOrganizer executable
       run: |
-        python build/build_exe.py --no-debug
+        python build/build_exe.py
         
     - name: Build SystemTray executable
       run: |
