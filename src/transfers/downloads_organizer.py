@@ -602,7 +602,9 @@ class DownloadsOrganizer:
         """Organize files in downloads folder"""
         
         if exclude_patterns is None:
-            exclude_patterns = ['.tmp', '.crdownload', '.download', '.part']
+            # Only exclude files that are clearly temporary/incomplete downloads
+            exclude_patterns = ['.tmp', '.crdownload', '.download']
+            # Note: Removed '.part' as it might be part of legitimate filenames
         
         results = {
             'moved_files': [],
@@ -618,8 +620,14 @@ class DownloadsOrganizer:
         
         # Get all files in downloads folder (non-recursive by default)
         try:
-            files = [f for f in self.downloads_path.iterdir() 
-                    if f.is_file() and not f.name.startswith('.')]
+            all_items = list(self.downloads_path.iterdir())
+            files = [f for f in all_items if f.is_file() and not f.name.startswith('.')]
+            folders = [f for f in all_items if f.is_dir() and not f.name.startswith('.')]
+            
+            print(f"DEBUG: Downloads folder contains {len(all_items)} total items")
+            print(f"DEBUG: Found {len(files)} files and {len(folders)} folders")
+            print(f"DEBUG: First 10 files: {[f.name for f in files[:10]]}")
+            
         except PermissionError as e:
             self.logger.error(f"Permission denied accessing downloads: {e}")
             return results
@@ -630,12 +638,18 @@ class DownloadsOrganizer:
             try:
                 print(f"DEBUG: Processing file: {file_path}")
                 
-                # Skip files that match exclude patterns
-                if any(pattern in file_path.name.lower() for pattern in exclude_patterns):
-                    print(f"DEBUG: Skipping {file_path.name} - matches exclude pattern")
+                # Skip files that match exclude patterns (check file endings, not just contains)
+                should_skip = False
+                for pattern in exclude_patterns:
+                    if file_path.name.lower().endswith(pattern.lower()):
+                        print(f"DEBUG: Skipping {file_path.name} - ends with exclude pattern '{pattern}'")
+                        should_skip = True
+                        break
+                
+                if should_skip:
                     results['skipped_files'].append({
                         'file': str(file_path),
-                        'reason': 'Excluded pattern'
+                        'reason': f'Excluded pattern (temp/incomplete file)'
                     })
                     continue
                 

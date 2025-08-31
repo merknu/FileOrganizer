@@ -549,49 +549,50 @@ class EnhancedMainApplication(QMainWindow):
     
     def organize_downloads(self):
         """Organize downloads folder with detailed feedback"""
-        if MODULES_AVAILABLE:
-            try:
-                self.log_activity("Starting downloads organization...")
-                organizer = DownloadsOrganizer()
+        try:
+            # Try to import DownloadsOrganizer directly
+            from transfers.downloads_organizer import DownloadsOrganizer
+            
+            self.log_activity("Starting downloads organization...")
+            organizer = DownloadsOrganizer()
+            
+            # Show downloads path for debugging
+            downloads_path = organizer.downloads_path
+            self.log_activity(f"Downloads folder: {downloads_path}")
+            
+            # Check if downloads folder exists and has files
+            if not downloads_path.exists():
+                QMessageBox.warning(self, "Downloads Not Found", 
+                                  f"Downloads folder not found at: {downloads_path}")
+                return
+            
+            # Get actual file count
+            all_files = list(downloads_path.glob('*'))
+            file_count = len([f for f in all_files if f.is_file()])
+            self.log_activity(f"Found {file_count} files in downloads folder (total items: {len(all_files)})")
+            
+            results = organizer.organize_downloads(dry_run=False)
+            self.log_activity(f"Organization complete: {len(results.get('moved_files', []))} moved, {len(results.get('skipped_files', []))} skipped")
+            
+            self.display_downloads_results(results)
+            
+            # Show completion message
+            moved_count = len(results.get('moved_files', []))
+            if moved_count > 0:
+                QMessageBox.information(self, "Organization Complete", 
+                                      f"Successfully organized {moved_count} files!")
+            else:
+                QMessageBox.information(self, "No Files Moved", 
+                                      "No files were moved. Check the results table for details.")
                 
-                # Show downloads path for debugging
-                downloads_path = organizer.downloads_path
-                self.log_activity(f"Downloads folder: {downloads_path}")
-                
-                # Check if downloads folder exists and has files
-                if not downloads_path.exists():
-                    QMessageBox.warning(self, "Downloads Not Found", 
-                                      f"Downloads folder not found at: {downloads_path}")
-                    return
-                
-                files = list(downloads_path.glob('*'))
-                self.log_activity(f"Found {len(files)} items in downloads folder")
-                
-                results = organizer.organize_downloads(dry_run=False)
-                self.log_activity(f"Organization complete: {len(results.get('moved_files', []))} moved, {len(results.get('skipped_files', []))} skipped")
-                
-                self.display_downloads_results(results)
-                
-                # Show completion message
-                moved_count = len(results.get('moved_files', []))
-                if moved_count > 0:
-                    QMessageBox.information(self, "Organization Complete", 
-                                          f"Successfully organized {moved_count} files!")
-                else:
-                    QMessageBox.information(self, "No Files Moved", 
-                                          "No files were moved. Check the results table for details.")
-                
-            except Exception as e:
-                error_msg = f"Failed to organize downloads: {str(e)}"
-                self.log_activity(f"ERROR: {error_msg}")
-                QMessageBox.critical(self, "Error", error_msg)
-        else:
-            # Simulate for demo
-            downloads = Path.home() / 'Downloads'
-            if downloads.exists():
-                files = [str(f) for f in downloads.glob('*') if f.is_file()][:10]  # Limit for demo
-                if files:
-                    self.start_file_operation("organize", files)
+        except ImportError as e:
+            self.log_activity(f"ERROR: Cannot import DownloadsOrganizer: {e}")
+            QMessageBox.critical(self, "Import Error", 
+                               f"Cannot import downloads organizer module: {e}")
+        except Exception as e:
+            error_msg = f"Failed to organize downloads: {str(e)}"
+            self.log_activity(f"ERROR: {error_msg}")
+            QMessageBox.critical(self, "Error", error_msg)
     
     def organize_desktop(self):
         """Organize desktop with detailed feedback"""
