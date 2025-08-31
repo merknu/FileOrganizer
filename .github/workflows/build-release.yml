@@ -43,7 +43,11 @@ jobs:
       run: |
         New-Item -ItemType Directory -Force -Path "releases/latest"
         Copy-Item "dist/FileOrganizer.exe" "releases/latest/"
-        Copy-Item "dist/FileOrganizer_SystemTray.exe" "releases/latest/"
+        if (Test-Path "dist/FileOrganizer_SystemTray.exe") {
+          Copy-Item "dist/FileOrganizer_SystemTray.exe" "releases/latest/"
+        } else {
+          Write-Host "Warning: FileOrganizer_SystemTray.exe not found, skipping..."
+        }
 
     - name: Upload Windows artifacts
       uses: actions/upload-artifact@v4
@@ -86,7 +90,11 @@ jobs:
       run: |
         mkdir -p releases/latest
         cp dist/FileOrganizer releases/latest/FileOrganizer-linux
-        cp dist/FileOrganizer_SystemTray releases/latest/FileOrganizer_SystemTray-linux
+        if [ -f "dist/FileOrganizer_SystemTray" ]; then
+          cp dist/FileOrganizer_SystemTray releases/latest/FileOrganizer_SystemTray-linux
+        else
+          echo "Warning: FileOrganizer_SystemTray not found, skipping..."
+        fi
 
     - name: Upload Linux artifacts
       uses: actions/upload-artifact@v4
@@ -124,7 +132,11 @@ jobs:
       run: |
         mkdir -p releases/latest
         cp -r dist/FileOrganizer.app releases/latest/
-        cp -r dist/FileOrganizer_SystemTray.app releases/latest/
+        if [ -d "dist/FileOrganizer_SystemTray.app" ]; then
+          cp -r dist/FileOrganizer_SystemTray.app releases/latest/
+        else
+          echo "Warning: FileOrganizer_SystemTray.app not found, skipping..."
+        fi
 
     - name: Upload macOS artifacts
       uses: actions/upload-artifact@v4
