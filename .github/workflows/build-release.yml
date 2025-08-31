@@ -46,7 +46,7 @@ jobs:
         Copy-Item "dist/FileOrganizer_SystemTray.exe" "releases/latest/"
 
     - name: Upload Windows artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: fileorganizer-windows
         path: releases/latest/
@@ -89,7 +89,7 @@ jobs:
         cp dist/FileOrganizer_SystemTray releases/latest/FileOrganizer_SystemTray-linux
 
     - name: Upload Linux artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: fileorganizer-linux
         path: releases/latest/
@@ -127,7 +127,7 @@ jobs:
         cp -r dist/FileOrganizer_SystemTray.app releases/latest/
 
     - name: Upload macOS artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: fileorganizer-macos
         path: releases/latest/
@@ -142,7 +142,10 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Download all artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
+      with:
+        pattern: fileorganizer-*
+        merge-multiple: true
 
     - name: Create release notes
       id: release-notes
@@ -189,11 +192,11 @@ jobs:
         draft: false
         prerelease: true
         files: |
-          fileorganizer-windows/FileOrganizer.exe
-          fileorganizer-windows/FileOrganizer_SystemTray.exe
-          fileorganizer-linux/FileOrganizer-linux
-          fileorganizer-linux/FileOrganizer_SystemTray-linux
-          fileorganizer-macos/FileOrganizer.app
-          fileorganizer-macos/FileOrganizer_SystemTray.app
+          FileOrganizer.exe
+          FileOrganizer_SystemTray.exe
+          FileOrganizer-linux
+          FileOrganizer_SystemTray-linux
+          FileOrganizer.app/**
+          FileOrganizer_SystemTray.app/**
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
