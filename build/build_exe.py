@@ -292,15 +292,15 @@ Filename: "{app}\FileOrganizer.exe"; Description: "{cm:LaunchProgram,FileOrganiz
     def print_summary(self):
         """Print build summary"""
         print("\n" + "="*50)
-        print("📊 BUILD SUMMARY")
+        print("BUILD SUMMARY")
         print("="*50)
         
         exe_path = self.dist_dir / 'FileOrganizer.exe'
         if exe_path.exists():
             size_mb = exe_path.stat().st_size / (1024 * 1024)
             print(f"OK: Executable: {exe_path}")
-            print(f"📏 Size: {size_mb:.2f} MB")
-            print(f"🖥️  Platform: {self.platform}")
+            print(f"Size: {size_mb:.2f} MB")
+            print(f"Platform: {self.platform}")
             print(f"Debug: {self.debug}")
             print(f"Compressed: {self.compress}")
         else:
