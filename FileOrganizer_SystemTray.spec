@@ -21,32 +21,18 @@ a = Analysis(
         # Example: ('ffmpeg.exe', '.') for Windows ffmpeg
     ],
     datas=[
-        # Include all GUI files
-        ('gui/*.py', 'gui'),
-        ('gui/*.ui', 'gui'),  # If you have UI files
+        # Include core modules
+        ('src/core', 'core'),
         
-        # Include file handler modules
-        ('file_handler/*.py', 'file_handler'),
+        # Include system tray modules
+        ('src/system_tray', 'system_tray'),
         
-        # Include event modules  
-        ('event/*.py', 'event'),
+        # Include transfers modules
+        ('src/transfers', 'transfers'),
         
-        # Include config files
-        ('config/*.json', 'config'),
-        ('config/*.yaml', 'config'),
+        # Include utils modules
+        ('src/utils', 'utils'),
         
-        # Include scenario system
-        ('system_tray_manager.py', '.'),
-        
-        # Include transfer tools
-        ('audio_transfer.py', '.'),
-        ('video_transfer.py', '.'), 
-        ('photo_transfer.py', '.'),
-        
-        # Include resources
-        # ('resources/icons/*.png', 'resources/icons'),
-        # ('resources/icons/*.ico', 'resources/icons'),
-        # ('resources/scenarios/*.json', 'resources/scenarios'),
     ],
     hiddenimports=[
         # PyQt5 modules for GUI and system tray
