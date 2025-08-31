@@ -29,29 +29,29 @@ class ExeBuilder:
         
     def check_requirements(self):
         """Check if required tools are installed"""
-        print("🔍 Checking requirements...")
+        print("Checking requirements...")
         
         # Check Python version
         if sys.version_info < (3, 7):
-            print("❌ Python 3.7+ is required")
+            print("ERROR: Python 3.7+ is required")
             return False
-        print(f"✅ Python {sys.version}")
+        print(f"OK: Python {sys.version}")
         
         # Check PyInstaller
         try:
             import PyInstaller
-            print(f"✅ PyInstaller {PyInstaller.__version__}")
+            print(f"OK: PyInstaller {PyInstaller.__version__}")
         except ImportError:
-            print("❌ PyInstaller not found. Installing...")
+            print("ERROR: PyInstaller not found. Installing...")
             subprocess.run([sys.executable, "-m", "pip", "install", "pyinstaller"])
             
         # Check for UPX (optional, for compression)
         if self.compress:
             upx_path = shutil.which("upx")
             if upx_path:
-                print(f"✅ UPX found at {upx_path}")
+                print(f"OK: UPX found at {upx_path}")
             else:
-                print("⚠️  UPX not found. Compression will be disabled.")
+                print("WARNING: UPX not found. Compression will be disabled.")
                 print("   Download from: https://github.com/upx/upx/releases")
                 self.compress = False
                 
@@ -60,7 +60,7 @@ class ExeBuilder:
     def clean_build(self):
         """Clean previous build artifacts"""
         if self.clean:
-            print("\n🧹 Cleaning previous builds...")
+            print("\nCleaning previous builds...")
             if self.build_dir.exists():
                 shutil.rmtree(self.build_dir)
                 print(f"   Removed {self.build_dir}")
@@ -70,17 +70,23 @@ class ExeBuilder:
     
     def prepare_resources(self):
         """Prepare resource files for bundling"""
-        print("\n📦 Preparing resources...")
+        print("\nPreparing resources...")
         
         # Create resources directory if it doesn't exist
         resources_dir = self.project_root / 'resources'
         resources_dir.mkdir(exist_ok=True)
         
-        # Create a default icon if it doesn't exist
-        icon_path = resources_dir / 'icon.ico'
-        if not icon_path.exists():
-            print("   ⚠️  No icon.ico found. Using default.")
-            # You could generate a default icon here
+        # Create default icons if they don't exist
+        icon_ico_path = resources_dir / 'icon.ico'
+        icon_icns_path = resources_dir / 'icon.icns'
+        
+        if not icon_ico_path.exists():
+            print("   WARNING: No icon.ico found. Using default.")
+            
+        if not icon_icns_path.exists():
+            print("   WARNING: No icon.icns found. Creating placeholder.")
+            # Create minimal icns file to prevent PyInstaller errors
+            icon_icns_path.write_bytes(b'')
             
         # Create version info file
         self.create_version_info()
@@ -128,7 +134,7 @@ VSVersionInfo(
     
     def optimize_imports(self):
         """Create optimized imports file to reduce size"""
-        print("\n🔧 Optimizing imports...")
+        print("\nOptimizing imports...")
         
         # Create a hook file for better import handling
         hooks_dir = self.project_root / 'hooks'
@@ -153,7 +159,7 @@ hiddenimports = [
     
     def build_executable(self):
         """Run PyInstaller to build the executable"""
-        print("\n🏗️  Building executable...")
+        print("\nBuilding executable...")
         
         # Prepare PyInstaller arguments
         main_script = str(self.src_dir / 'core' / 'main.py')
@@ -170,13 +176,11 @@ hiddenimports = [
         if self.platform == 'windows':
             args.extend([
                 '--windowed',  # No console window
-                '--icon=resources/icon.ico',
                 '--version-file=version_info.txt',
             ])
         elif self.platform == 'darwin':  # macOS
             args.extend([
                 '--windowed',
-                '--icon=resources/icon.icns',
                 '--osx-bundle-identifier=com.fileorganizer.app',
             ])
         else:  # Linux
@@ -210,19 +214,19 @@ hiddenimports = [
             )
             
             if result.returncode == 0:
-                print("✅ Build successful!")
+                print("OK: Build successful!")
                 return True
             else:
-                print("❌ Build failed!")
+                print("ERROR: Build failed!")
                 return False
                 
         except Exception as e:
-            print(f"❌ Build error: {e}")
+            print(f"ERROR: Build error: {e}")
             return False
     
     def create_installer(self):
         """Create an installer for the executable"""
-        print("\n📦 Creating installer...")
+        print("\nCreating installer...")
         
         if self.platform == 'windows':
             # Create Inno Setup script
@@ -294,19 +298,19 @@ Filename: "{app}\FileOrganizer.exe"; Description: "{cm:LaunchProgram,FileOrganiz
         exe_path = self.dist_dir / 'FileOrganizer.exe'
         if exe_path.exists():
             size_mb = exe_path.stat().st_size / (1024 * 1024)
-            print(f"✅ Executable: {exe_path}")
+            print(f"OK: Executable: {exe_path}")
             print(f"📏 Size: {size_mb:.2f} MB")
             print(f"🖥️  Platform: {self.platform}")
-            print(f"🔧 Debug: {self.debug}")
-            print(f"📦 Compressed: {self.compress}")
+            print(f"Debug: {self.debug}")
+            print(f"Compressed: {self.compress}")
         else:
-            print("❌ No executable found")
+            print("ERROR: No executable found")
             
         print("="*50)
     
     def run(self):
         """Run the complete build process"""
-        print("🚀 FileOrganizer EXE Builder")
+        print("FileOrganizer EXE Builder")
         print("="*50)
         
         if not self.check_requirements():
@@ -342,10 +346,10 @@ def main():
     success = builder.run()
     
     if success:
-        print("\n✅ Build completed successfully!")
+        print("\nBuild completed successfully!")
         print(f"📁 Output directory: {builder.dist_dir}")
     else:
-        print("\n❌ Build failed!")
+        print("\nBuild failed!")
         sys.exit(1)
 
 if __name__ == '__main__':
