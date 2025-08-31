@@ -101,8 +101,8 @@ class ExeBuilder:
         version_info = """
 VSVersionInfo(
   ffi=FixedFileInfo(
-    filevers=(0, 2, 5, 0),
-    prodvers=(0, 2, 5, 0),
+    filevers=(0, 2, 6, 0),
+    prodvers=(0, 2, 6, 0),
     mask=0x3f,
     flags=0x0,
     OS=0x40004,
@@ -117,12 +117,12 @@ VSVersionInfo(
         u'040904B0',
         [StringStruct(u'CompanyName', u'FileOrganizer Team'),
         StringStruct(u'FileDescription', u'Advanced File Organization Tool - Alpha'),
-        StringStruct(u'FileVersion', u'0.2.005.0'),
+        StringStruct(u'FileVersion', u'0.2.006.0'),
         StringStruct(u'InternalName', u'FileOrganizer'),
         StringStruct(u'LegalCopyright', u'Copyright 2024 FileOrganizer Team'),
         StringStruct(u'OriginalFilename', u'FileOrganizer.exe'),
         StringStruct(u'ProductName', u'FileOrganizer Alpha'),
-        StringStruct(u'ProductVersion', u'0.2.005.0')])
+        StringStruct(u'ProductVersion', u'0.2.006.0')])
       ]),
     VarFileInfo([VarStruct(u'Translation', [1033, 1200])])
   ]
