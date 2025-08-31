@@ -1,0 +1,264 @@
+name: Auto Build and Release
+
+on:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - '**.md'
+      - '.gitignore'
+      - 'docs/**'
+      - 'tests/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  increment-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.increment.outputs.version }}
+      
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Increment version
+      id: increment
+      run: |
+        python scripts/increment_version.py
+        VERSION=$(cat version.txt)
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "New version: $VERSION"
+    
+    - name: Commit version update
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add version.txt
+        git add build/build_exe.py || true
+        git diff --staged --quiet || git commit -m "Auto-increment version to $(cat version.txt)"
+        git push
+    
+    - name: Create version tag
+      run: |
+        VERSION=$(cat version.txt)
+        git tag "v$VERSION"
+        git push origin "v$VERSION"
+
+  build-windows:
+    needs: increment-version
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        ref: v${{ needs.increment-version.outputs.version }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r build/requirements-exe.txt
+        pip install pyinstaller
+
+    - name: Install UPX for compression
+      run: |
+        Invoke-WebRequest -Uri "https://github.com/upx/upx/releases/download/v4.2.1/upx-4.2.1-win64.zip" -OutFile "upx.zip"
+        Expand-Archive -Path "upx.zip" -DestinationPath "."
+        Move-Item "upx-4.2.1-win64\upx.exe" "upx.exe"
+
+    - name: Build FileOrganizer executable
+      run: |
+        python build/build_exe.py
+        
+    - name: Build SystemTray executable
+      run: |
+        pyinstaller FileOrganizer_SystemTray.spec
+
+    - name: Create release directory
+      run: |
+        New-Item -ItemType Directory -Force -Path "releases/latest"
+        Copy-Item "dist/FileOrganizer.exe" "releases/latest/"
+        if (Test-Path "dist/FileOrganizer_SystemTray.exe") {
+          Copy-Item "dist/FileOrganizer_SystemTray.exe" "releases/latest/"
+        } else {
+          Write-Host "Warning: FileOrganizer_SystemTray.exe not found, skipping..."
+        }
+
+    - name: Upload Windows artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: fileorganizer-windows
+        path: releases/latest/
+
+  build-linux:
+    needs: increment-version
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        ref: v${{ needs.increment-version.outputs.version }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y python3-tk upx-ucl
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r build/requirements-exe.txt
+        pip install pyinstaller
+
+    - name: Build FileOrganizer executable
+      run: |
+        python build/build_exe.py
+        
+    - name: Build SystemTray executable
+      run: |
+        pyinstaller FileOrganizer_SystemTray.spec
+
+    - name: Create release directory
+      run: |
+        mkdir -p releases/latest
+        cp dist/FileOrganizer releases/latest/FileOrganizer-linux
+        if [ -f "dist/FileOrganizer_SystemTray" ]; then
+          cp dist/FileOrganizer_SystemTray releases/latest/FileOrganizer_SystemTray-linux
+        else
+          echo "Warning: FileOrganizer_SystemTray not found, skipping..."
+        fi
+
+    - name: Upload Linux artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: fileorganizer-linux
+        path: releases/latest/
+
+  build-macos:
+    needs: increment-version
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        ref: v${{ needs.increment-version.outputs.version }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r build/requirements-exe.txt
+        pip install pyinstaller
+
+    - name: Build FileOrganizer executable
+      run: |
+        python build/build_exe.py
+        
+    - name: Build SystemTray executable
+      run: |
+        pyinstaller FileOrganizer_SystemTray.spec
+
+    - name: Create release directory
+      run: |
+        mkdir -p releases/latest
+        cp -r dist/FileOrganizer.app releases/latest/
+        if [ -d "dist/FileOrganizer_SystemTray.app" ]; then
+          cp -r dist/FileOrganizer_SystemTray.app releases/latest/
+        else
+          echo "Warning: FileOrganizer_SystemTray.app not found, skipping..."
+        fi
+
+    - name: Upload macOS artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: fileorganizer-macos
+        path: releases/latest/
+
+  create-release:
+    needs: [increment-version, build-windows, build-linux, build-macos]
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        ref: v${{ needs.increment-version.outputs.version }}
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        pattern: fileorganizer-*
+        merge-multiple: true
+
+    - name: Create release notes
+      id: release-notes
+      run: |
+        VERSION="${{ needs.increment-version.outputs.version }}"
+        echo "RELEASE_NOTES<<EOF" >> $GITHUB_OUTPUT
+        echo "## FileOrganizer v${VERSION} - Auto Release 🚀" >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
+        echo "**🔄 Automatic build triggered by commit to master branch**" >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
+        echo "### 📦 Version" >> $GITHUB_OUTPUT
+        echo "- Version: **v${VERSION}**" >> $GITHUB_OUTPUT
+        echo "- Build Date: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_OUTPUT
+        echo "- Commit: ${{ github.sha }}" >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
+        echo "### 🎯 Latest Changes" >> $GITHUB_OUTPUT
+        echo "- Enhanced main application with detailed file operation feedback" >> $GITHUB_OUTPUT
+        echo "- Window no longer auto-hides to system tray" >> $GITHUB_OUTPUT
+        echo "- Added detailed results table for all file operations" >> $GITHUB_OUTPUT
+        echo "- Real-time progress tracking" >> $GITHUB_OUTPUT
+        echo "- Automatic version incrementing (0.001 per release)" >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
+        echo "### 📥 Downloads" >> $GITHUB_OUTPUT
+        echo "- **Windows**: FileOrganizer.exe" >> $GITHUB_OUTPUT
+        echo "- **Linux**: FileOrganizer-linux" >> $GITHUB_OUTPUT
+        echo "- **macOS**: FileOrganizer.app" >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
+        echo "### 🏃‍♂️ Quick Start" >> $GITHUB_OUTPUT
+        echo "1. Download the appropriate version for your OS" >> $GITHUB_OUTPUT
+        echo "2. Run FileOrganizer to see the enhanced UI" >> $GITHUB_OUTPUT
+        echo "3. File operations now show detailed feedback" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v${{ needs.increment-version.outputs.version }}
+        name: FileOrganizer v${{ needs.increment-version.outputs.version }}
+        body: ${{ steps.release-notes.outputs.RELEASE_NOTES }}
+        draft: false
+        prerelease: false
+        files: |
+          FileOrganizer.exe
+          FileOrganizer-linux
+          FileOrganizer.app
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
