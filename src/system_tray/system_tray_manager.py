@@ -7,6 +7,7 @@ Provides system tray functionality with scenario-based workflows
 import sys
 import os
 import json
+import logging
 from pathlib import Path
 from typing import Dict, List, Optional, Callable
 from PyQt5.QtWidgets import (
@@ -17,6 +18,13 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt, QTimer, QThread, pyqtSignal, QSettings
 from PyQt5.QtGui import QIcon, QPixmap, QPainter, QFont
+
+# Setup logging
+logger = logging.getLogger(__name__)
+
+# Add parent directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from utils.file_utils import format_file_size
 
 class ScenarioManager:
     """Manages predefined and custom scenarios"""
@@ -382,21 +390,13 @@ class ScenarioExecutor(QThread):
             # Count potential duplicates
             duplicates_found = sum(1 for paths in duplicate_candidates.values() if len(paths) > 1)
 
-            # Format total size
-            def format_size(size_bytes):
-                for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
-                    if size_bytes < 1024.0:
-                        return f"{size_bytes:.2f} {unit}"
-                    size_bytes /= 1024.0
-                return f"{size_bytes:.2f} PB"
-
             return {
                 'status': 'completed',
                 'files_analyzed': file_count,
-                'total_size': format_size(total_size),
+                'total_size': format_file_size(total_size),
                 'duplicates_found': duplicates_found,
                 'file_types': dict(file_types),
-                'space_analysis': f'{format_size(total_size * 0.1)} could potentially be saved'
+                'space_analysis': f'{format_file_size(total_size * 0.1)} could potentially be saved'
             }
 
         except Exception as e:
@@ -659,18 +659,10 @@ class ScenarioExecutor(QThread):
                     except (PermissionError, OSError):
                         continue
 
-            # Format space freed
-            def format_size(size_bytes):
-                for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
-                    if size_bytes < 1024.0:
-                        return f"{size_bytes:.2f}{unit}"
-                    size_bytes /= 1024.0
-                return f"{size_bytes:.2f}PB"
-
             return {
                 'status': 'completed',
                 'files_removed': files_removed,
-                'space_freed': format_size(space_freed),
+                'space_freed': format_file_size(space_freed),
                 'cleanup_type': cleanup_type
             }
 

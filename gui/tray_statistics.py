@@ -460,24 +460,27 @@ if __name__ == "__main__":
     # Simulate some processing events
     def simulate_processing():
         import random
-        
+        from pathlib import Path
+
         actions = ["organized", "organized", "organized", "skipped", "error"]
-        folders = ["/home/user/Downloads", "/home/user/Desktop", "/home/user/Documents"]
-        
+        # Use platform-independent paths for testing
+        home = Path.home()
+        folders = [str(home / "Downloads"), str(home / "Desktop"), str(home / "Documents")]
+
         action = random.choice(actions)
         folder = random.choice(folders)
         filename = f"test_file_{random.randint(1, 1000)}.txt"
         file_path = os.path.join(folder, filename)
-        
+
         stats_manager.record_processing_event(
             file_path=file_path,
             action=action,
             source_folder=folder,
-            destination_folder="/home/user/Organized" if action == "organized" else None,
+            destination_folder=str(home / "Organized") if action == "organized" else None,
             file_size=random.randint(1024, 10*1024*1024),
             processing_time=random.uniform(0.1, 2.0)
         )
-        
+
         if random.random() > 0.7:
             stats_manager.set_current_activity("Processing files", file_path, [folder])
         else:
@@ -500,7 +503,9 @@ if __name__ == "__main__":
     stats_manager.tooltip_updated.connect(on_tooltip_updated)
     
     # Start monitoring
-    stats_manager.set_monitoring_status(True, ["/home/user/Downloads", "/home/user/Desktop"])
+    from pathlib import Path
+    home = Path.home()
+    stats_manager.set_monitoring_status(True, [str(home / "Downloads"), str(home / "Desktop")])
     
     print("Testing statistics manager...")
     print("Tooltip will update every 2 seconds")
