@@ -350,7 +350,7 @@ class EnhancedMainApplication(QMainWindow):
     def log_activity(self, message: str):
         """Log activity to the results widget or status bar"""
         self.statusBar().showMessage(message)
-        print(f"Activity: {message}")  # Also print to console for debugging
+        logging.debug(f"Activity: {message}")
     
     def create_file_org_tab(self):
         """Create enhanced file organization tab"""
