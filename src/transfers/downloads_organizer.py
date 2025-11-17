@@ -494,7 +494,7 @@ class DownloadsOrganizer:
             file_time = datetime.fromtimestamp(file_path.stat().st_mtime)
             time_diff = datetime.now() - file_time
             return time_diff.total_seconds() < (hours * 3600)
-        except:
+        except (OSError, ValueError, OverflowError):
             return True  # If we can't determine, assume it's recent
     
     def get_unique_filename(self, destination: Path, filename: str) -> Path:
@@ -528,35 +528,35 @@ class DownloadsOrganizer:
         try:
             # Check 1: Destination file exists
             if not destination_path.exists():
-                print(f"DEBUG: Verification failed - destination file does not exist: {destination_path}")
+                self.logger.debug(f"Verification failed - destination file does not exist: {destination_path}")
                 return False
-            
+
             # Check 2: Source file no longer exists
             if source_path.exists():
-                print(f"DEBUG: Verification failed - source file still exists: {source_path}")
+                self.logger.debug(f"Verification failed - source file still exists: {source_path}")
                 return False
-            
+
             # Check 3: Destination file is actually a file (not directory)
             if not destination_path.is_file():
-                print(f"DEBUG: Verification failed - destination is not a file: {destination_path}")
+                self.logger.debug(f"Verification failed - destination is not a file: {destination_path}")
                 return False
-            
+
             # Check 4: Destination file has reasonable size (> 0 bytes)
             try:
                 file_size = destination_path.stat().st_size
                 if file_size == 0:
-                    print(f"DEBUG: Warning - destination file has 0 bytes: {destination_path}")
+                    self.logger.warning(f"Destination file has 0 bytes: {destination_path}")
                     # Don't fail for 0-byte files as they might be legitimate
-                
-                print(f"DEBUG: Verification passed - file moved successfully, size: {file_size} bytes")
+
+                self.logger.debug(f"Verification passed - file moved successfully, size: {file_size} bytes")
                 return True
-                
+
             except OSError as e:
-                print(f"DEBUG: Verification failed - cannot stat destination file: {e}")
+                self.logger.debug(f"Verification failed - cannot stat destination file: {e}")
                 return False
-            
+
         except Exception as e:
-            print(f"DEBUG: Verification failed with exception: {e}")
+            self.logger.debug(f"Verification failed with exception: {e}")
             return False
     
     def diagnose_move_failure(self, source_path: Path, destination_path: Path) -> str:
@@ -623,26 +623,26 @@ class DownloadsOrganizer:
             all_items = list(self.downloads_path.iterdir())
             files = [f for f in all_items if f.is_file() and not f.name.startswith('.')]
             folders = [f for f in all_items if f.is_dir() and not f.name.startswith('.')]
-            
-            print(f"DEBUG: Downloads folder contains {len(all_items)} total items")
-            print(f"DEBUG: Found {len(files)} files and {len(folders)} folders")
-            print(f"DEBUG: First 10 files: {[f.name for f in files[:10]]}")
-            
+
+            self.logger.debug(f"Downloads folder contains {len(all_items)} total items")
+            self.logger.debug(f"Found {len(files)} files and {len(folders)} folders")
+            self.logger.debug(f"First 10 files: {[f.name for f in files[:10]]}")
+
         except PermissionError as e:
             self.logger.error(f"Permission denied accessing downloads: {e}")
             return results
-        
-        print(f"DEBUG: Processing {len(files)} files from downloads")
+
+        self.logger.debug(f"Processing {len(files)} files from downloads")
         
         for file_path in files:
             try:
-                print(f"DEBUG: Processing file: {file_path}")
-                
+                self.logger.debug(f"Processing file: {file_path}")
+
                 # Skip files that match exclude patterns (check file endings, not just contains)
                 should_skip = False
                 for pattern in exclude_patterns:
                     if file_path.name.lower().endswith(pattern.lower()):
-                        print(f"DEBUG: Skipping {file_path.name} - ends with exclude pattern '{pattern}'")
+                        self.logger.debug(f"Skipping {file_path.name} - ends with exclude pattern '{pattern}'")
                         should_skip = True
                         break
                 
@@ -663,20 +663,20 @@ class DownloadsOrganizer:
                 
                 # Categorize the file
                 category, icon = self.categorize_file(file_path)
-                print(f"DEBUG: File {file_path.name} categorized as: {category}")
-                
+                self.logger.debug(f"File {file_path.name} categorized as: {category}")
+
                 if category == 'unknown':
-                    print(f"DEBUG: Skipping {file_path.name} - unknown file type")
+                    self.logger.debug(f"Skipping {file_path.name} - unknown file type")
                     results['skipped_files'].append({
                         'file': str(file_path),
                         'reason': 'Unknown file type'
                     })
                     continue
-                
+
                 # Get destination folder
                 destination_folder = self.folder_manager.get_destination_folder(category)
                 destination_path = self.get_unique_filename(destination_folder, file_path.name)
-                print(f"DEBUG: Destination for {category}: {destination_folder}")
+                self.logger.debug(f"Destination for {category}: {destination_folder}")
                 
                 # Record the planned move
                 move_info = {
@@ -693,39 +693,38 @@ class DownloadsOrganizer:
                     results['categories_used'].add(category)
                 else:
                     # Actually move the file
-                    print(f"DEBUG: Moving {file_path} to {destination_path}")
-                    
+                    self.logger.debug(f"Moving {file_path} to {destination_path}")
+
                     try:
                         # Perform the move
                         shutil.move(str(file_path), str(destination_path))
-                        
+
                         # Small delay to ensure file system operations complete
                         import time
                         time.sleep(0.1)
-                        
+
                         # Verify the move was successful
                         move_successful = self.verify_file_move(file_path, destination_path)
-                        
+
                         if move_successful:
                             self.logger.info(f"Moved {file_path.name} to {destination_folder}")
-                            print(f"DEBUG: Successfully moved and verified {file_path.name}")
-                            
+                            self.logger.debug(f"Successfully moved and verified {file_path.name}")
+
                             results['moved_files'].append(move_info)
                             results['categories_used'].add(category)
                             self.organized_count += 1
                         else:
                             # Move failed verification - try to diagnose the issue
                             diagnostic_info = self.diagnose_move_failure(file_path, destination_path)
-                            
+
                             error_info = {
                                 'file': str(file_path),
                                 'error': f'File move verification failed - {diagnostic_info}'
                             }
                             results['error_files'].append(error_info)
                             self.logger.error(f"Move verification failed for {file_path.name}: {diagnostic_info}")
-                            print(f"DEBUG: VERIFICATION FAILED for {file_path.name}: {diagnostic_info}")
                             self.error_count += 1
-                            
+
                     except Exception as move_error:
                         # Move operation itself failed
                         error_info = {
@@ -734,7 +733,6 @@ class DownloadsOrganizer:
                         }
                         results['error_files'].append(error_info)
                         self.logger.error(f"Failed to move {file_path.name}: {move_error}")
-                        print(f"DEBUG: MOVE FAILED for {file_path.name}: {move_error}")
                         self.error_count += 1
                 
             except Exception as e:

@@ -1,8 +1,10 @@
 # Path: main.py
 import sys
+import os
 import logging
+from pathlib import Path
 from PyQt5.QtWidgets import (
-    QApplication, QMainWindow, QAction, QVBoxLayout, QHBoxLayout, 
+    QApplication, QMainWindow, QAction, QVBoxLayout, QHBoxLayout,
     QWidget, QPushButton, QLabel, QFileDialog, QMessageBox,
     QSystemTrayIcon, QMenu, QGroupBox, QGridLayout, QProgressBar,
     QTextEdit, QTabWidget
@@ -12,6 +14,7 @@ from PyQt5.QtGui import QIcon, QFont
 from config.config_handler import ConfigHandler
 from gui.main_window import FileOrganizerMainWindow
 from gui.photo_transfer_window import PhotoTransferWindow
+from file_handler.file_utils import organize_files
 
 logging.basicConfig(filename='file_organizer.log', level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(module)s - %(funcName)s - %(lineno)d - %(message)s')
@@ -291,34 +294,173 @@ class MainApplication(QMainWindow):
     # File operation methods (implement the actual functionality)
     def select_files_to_organize(self):
         """Select individual files to organize"""
-        files, _ = QFileDialog.getOpenFileNames(self, "Select Files to Organize", 
+        files, _ = QFileDialog.getOpenFileNames(self, "Select Files to Organize",
                                                "", "All Files (*.*)")
         if files:
             self.log_activity(f"Selected {len(files)} files for organization")
-            # TODO: Implement file organization logic
-            QMessageBox.information(self, "Files Selected", 
-                                  f"Selected {len(files)} files. Organization feature coming soon!")
+            try:
+                # Organize each file in its parent directory
+                organized_count = 0
+                failed_count = 0
+
+                for file_path in files:
+                    try:
+                        parent_dir = os.path.dirname(file_path)
+                        # Organize the parent directory with the single file
+                        result = organize_files(parent_dir, global_app_config,
+                                              recursive=False, preview_mode=False)
+
+                        if result.get('organized', 0) > 0:
+                            organized_count += 1
+                        else:
+                            failed_count += 1
+
+                    except Exception as e:
+                        logging.error(f"Error organizing file {file_path}: {e}")
+                        failed_count += 1
+
+                # Show results
+                if organized_count > 0:
+                    self.log_activity(f"Successfully organized {organized_count} files")
+                    QMessageBox.information(self, "Organization Complete",
+                                          f"Successfully organized {organized_count} files.\n"
+                                          f"Failed: {failed_count}")
+                else:
+                    QMessageBox.warning(self, "Organization Failed",
+                                      f"No files were organized.\nFailed: {failed_count}")
+
+            except Exception as e:
+                logging.error(f"Error in file organization: {e}")
+                QMessageBox.critical(self, "Error", f"An error occurred: {str(e)}")
     
     def select_folder_to_organize(self):
         """Select folder to organize"""
         folder = QFileDialog.getExistingDirectory(self, "Select Folder to Organize")
         if folder:
             self.log_activity(f"Selected folder for organization: {folder}")
-            # TODO: Implement folder organization logic
-            QMessageBox.information(self, "Folder Selected", 
-                                  f"Selected folder: {folder}\nOrganization feature coming soon!")
+            try:
+                # Ask user if they want recursive organization
+                reply = QMessageBox.question(self, "Organization Options",
+                                            "Do you want to organize files in subdirectories as well?",
+                                            QMessageBox.Yes | QMessageBox.No,
+                                            QMessageBox.No)
+                recursive = (reply == QMessageBox.Yes)
+
+                # Organize the folder
+                result = organize_files(folder, global_app_config,
+                                      recursive=recursive, preview_mode=False)
+
+                # Show results
+                organized = result.get('organized', 0)
+                errors = result.get('error', 0) + result.get('permission_denied', 0)
+
+                if organized > 0:
+                    self.log_activity(f"Successfully organized {organized} files in {folder}")
+                    QMessageBox.information(self, "Organization Complete",
+                                          f"Successfully organized {organized} files.\n"
+                                          f"Errors: {errors}")
+                else:
+                    QMessageBox.warning(self, "Organization Failed",
+                                      f"No files were organized.\nErrors: {errors}")
+
+            except Exception as e:
+                logging.error(f"Error organizing folder {folder}: {e}")
+                QMessageBox.critical(self, "Error", f"An error occurred: {str(e)}")
     
     def organize_downloads(self):
         """Organize downloads folder"""
         self.log_activity("Organizing Downloads folder...")
-        # TODO: Implement downloads organization
-        QMessageBox.information(self, "Downloads Organization", "Downloads organization feature coming soon!")
+        try:
+            # Import the downloads organizer
+            sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+            from transfers.downloads_organizer import DownloadsOrganizer
+
+            # Ask user if they want dry run first
+            reply = QMessageBox.question(self, "Organization Options",
+                                        "Do you want to preview changes first (dry run)?",
+                                        QMessageBox.Yes | QMessageBox.No,
+                                        QMessageBox.Yes)
+            dry_run = (reply == QMessageBox.Yes)
+
+            # Create organizer and run
+            organizer = DownloadsOrganizer()
+            results = organizer.organize_downloads(recent_only=False, dry_run=dry_run)
+
+            # Show results
+            moved = len(results['moved_files'])
+            skipped = len(results['skipped_files'])
+            errors = len(results['error_files'])
+
+            if dry_run:
+                message = f"Dry Run Results:\n\n" \
+                         f"Files to be moved: {moved}\n" \
+                         f"Files to be skipped: {skipped}\n" \
+                         f"Errors: {errors}\n\n" \
+                         f"Categories: {', '.join(results['categories_used'])}"
+
+                reply = QMessageBox.question(self, "Preview Results", message + "\n\nDo you want to proceed with actual organization?",
+                                            QMessageBox.Yes | QMessageBox.No,
+                                            QMessageBox.No)
+
+                if reply == QMessageBox.Yes:
+                    # Run actual organization
+                    results = organizer.organize_downloads(recent_only=False, dry_run=False)
+                    moved = len(results['moved_files'])
+                    self.log_activity(f"Organized {moved} files from Downloads")
+                    QMessageBox.information(self, "Organization Complete",
+                                          f"Successfully organized {moved} files from Downloads folder!")
+            else:
+                self.log_activity(f"Organized {moved} files from Downloads")
+                QMessageBox.information(self, "Organization Complete",
+                                      f"Successfully organized {moved} files from Downloads folder!\n"
+                                      f"Skipped: {skipped}, Errors: {errors}")
+
+        except ImportError as e:
+            logging.error(f"Failed to import downloads organizer: {e}")
+            QMessageBox.critical(self, "Error", f"Downloads organizer module not found: {str(e)}")
+        except Exception as e:
+            logging.error(f"Error organizing downloads: {e}")
+            QMessageBox.critical(self, "Error", f"An error occurred: {str(e)}")
     
     def organize_desktop(self):
         """Organize desktop"""
         self.log_activity("Organizing Desktop...")
-        # TODO: Implement desktop organization
-        QMessageBox.information(self, "Desktop Organization", "Desktop organization feature coming soon!")
+        try:
+            # Get desktop path
+            desktop_path = str(Path.home() / "Desktop")
+
+            if not os.path.exists(desktop_path):
+                QMessageBox.warning(self, "Desktop Not Found",
+                                  f"Desktop folder not found at: {desktop_path}")
+                return
+
+            # Ask user if they want recursive organization
+            reply = QMessageBox.question(self, "Organization Options",
+                                        "Do you want to organize files in Desktop subdirectories as well?",
+                                        QMessageBox.Yes | QMessageBox.No,
+                                        QMessageBox.No)
+            recursive = (reply == QMessageBox.Yes)
+
+            # Organize the desktop
+            result = organize_files(desktop_path, global_app_config,
+                                  recursive=recursive, preview_mode=False)
+
+            # Show results
+            organized = result.get('organized', 0)
+            errors = result.get('error', 0) + result.get('permission_denied', 0)
+
+            if organized > 0:
+                self.log_activity(f"Successfully organized {organized} files on Desktop")
+                QMessageBox.information(self, "Organization Complete",
+                                      f"Successfully organized {organized} files on Desktop.\n"
+                                      f"Errors: {errors}")
+            else:
+                QMessageBox.warning(self, "Organization Failed",
+                                  f"No files were organized on Desktop.\nErrors: {errors}")
+
+        except Exception as e:
+            logging.error(f"Error organizing desktop: {e}")
+            QMessageBox.critical(self, "Error", f"An error occurred: {str(e)}")
     
     def quick_organize_files(self):
         """Quick organize from tray"""

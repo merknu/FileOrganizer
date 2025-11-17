@@ -1,0 +1,120 @@
+# Changelog
+
+All notable changes to FileOrganizer will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.2.009] - 2025-11-17
+
+### Added
+- **Constants Module**: New `src/utils/constants.py` with application-wide constants
+  - File size constants (KB, MB, GB, TB, PB)
+  - Time constants (SECOND, MINUTE, HOUR, DAY, WEEK)
+  - UI constants (dialog sizes, update intervals)
+  - File format definitions (images, videos, audio, documents, archives)
+  - Default settings and limits
+  - Temporary file patterns and exclude patterns
+
+- **Enhanced Utility Functions** in `src/utils/file_utils.py`:
+  - `get_file_hash()`: Calculate file hashes with multiple algorithms (MD5, SHA1, SHA256, SHA512)
+  - `is_binary_file()`: Detect if file is binary by content analysis
+  - `safe_copy()`: Copy files with hash verification and error handling
+  - `get_file_age_days()`: Get file age in days from modification time
+
+### Changed
+- Replaced console `print()` with `logging.debug()` in `src/core/main_enhanced.py`
+- Enhanced `src/utils/__init__.py` with better organization and exports
+- Updated utility module to export 8 functions and 6 constants
+
+### Improved
+- Code organization with centralized constants
+- Type hints throughout utility module
+- Comprehensive docstrings with examples for all utilities
+- Better error handling in all utility functions
+
+## [0.2.008] - 2025-11-17
+
+### Added
+- **Utility Module**: New `src/utils/` package for common utilities
+  - `format_file_size()`: Human-readable file size formatting
+  - `validate_path()`: Safe path validation with security checks
+  - `sanitize_filename()`: Remove invalid characters from filenames
+  - `get_unique_path()`: Generate unique file paths avoiding conflicts
+- **Comprehensive Test Suite**: 11 unit tests for utility functions with 100% coverage
+- **Logging Support**: Added logging to system_tray_manager.py for better debugging
+
+### Changed
+- Refactored duplicate `format_size()` functions to use centralized `format_file_size()` utility
+- Improved platform independence in test code (Path.home() instead of hardcoded paths)
+- Better code organization with shared utilities
+
+### Fixed
+- Hardcoded paths in `gui/tray_statistics.py` test code now use platform-independent paths
+- Code duplication eliminated across multiple files
+
+### Improved
+- Code maintainability through utility function extraction
+- Test coverage with comprehensive unit tests
+- Logging infrastructure for debugging
+
+## [0.2.007] - 2025-11-17
+
+### Added
+- **Custom Scenario Creator Dialog**: Create and save custom file organization workflows
+  - Visual workflow builder with checkboxes for scan, analyze, organize, transfer, and cleanup steps
+  - Path configuration with browse dialogs
+  - Persistent storage as JSON files in user's config directory
+  - Custom icons and descriptions support
+
+- **Settings Dialog**: Comprehensive application settings
+  - General settings (startup messages, tray behavior, exit confirmation)
+  - Notification preferences (duration, completion/error toggles)
+  - File organization options (auto-organize, verification, intervals)
+  - Reset to defaults functionality
+  - Persistent settings using Qt QSettings
+
+- **File Organization Features**:
+  - Individual file organization with error handling
+  - Folder organization with recursive option
+  - Downloads folder organization with dry-run preview
+  - Desktop organization with platform detection
+
+- **System Tray Enhancements**:
+  - Quick organize feature from system tray
+  - Full integration with file organization utilities
+
+- **Scenario Execution Implementation**:
+  - File scanning (recursive and non-recursive)
+  - File analysis with duplicate detection
+  - File transfer between locations
+  - Video transcoding integration
+  - Cleanup operations (temp files, old files, empty directories)
+
+### Changed
+- Replaced DEBUG print statements with proper logging in downloads_organizer.py
+- Improved exception handling with specific exception types instead of bare except clauses
+- Updated version to 0.2.007
+
+### Fixed
+- Better error handling in file time checking (OSError, ValueError, OverflowError)
+- Input validation for custom scenarios
+- Proper path handling with pathlib.Path objects
+
+### Improved
+- Code quality with consistent logging practices
+- Documentation and docstrings for new features
+- Settings persistence across sessions
+
+## [0.2.006] - 2025-11-17
+
+### Added
+- Downloads folder scanning to find all files
+- Comprehensive file move verification system
+
+### Fixed
+- File scanning now correctly identifies all files in downloads folder
+
+## Previous Versions
+
+See git history for earlier changes.

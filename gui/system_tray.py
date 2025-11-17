@@ -754,13 +754,29 @@ class SystemTrayApp(QApplication):
         """Quick organize a selected folder"""
         try:
             from PyQt5.QtWidgets import QFileDialog
-            
+            from file_handler.file_utils import organize_files
+
             folder = QFileDialog.getExistingDirectory(None, "Select Folder to Organize")
             if folder:
                 # This would integrate with the main processing logic
                 self.show_notification("Quick Organize", f"Organizing: {os.path.basename(folder)}")
-                # TODO: Implement actual quick organize functionality
-                
+
+                # Organize the folder
+                result = organize_files(folder, self.app_config,
+                                      recursive=False, preview_mode=False)
+
+                # Show results
+                organized = result.get('organized', 0)
+                errors = result.get('error', 0) + result.get('permission_denied', 0)
+
+                if organized > 0:
+                    self.show_notification("Organization Complete",
+                                         f"Organized {organized} files in {os.path.basename(folder)}")
+                    self.logger.info(f"Quick organized {organized} files in {folder}")
+                else:
+                    self.show_notification("No Files Organized",
+                                         f"No files were organized. Errors: {errors}")
+
         except Exception as e:
             self.logger.error(f"Error in quick organize: {e}")
             self.show_notification("Error", f"Quick organize failed: {str(e)}")

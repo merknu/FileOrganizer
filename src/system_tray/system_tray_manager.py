@@ -7,6 +7,7 @@ Provides system tray functionality with scenario-based workflows
 import sys
 import os
 import json
+import logging
 from pathlib import Path
 from typing import Dict, List, Optional, Callable
 from PyQt5.QtWidgets import (
@@ -17,6 +18,13 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt, QTimer, QThread, pyqtSignal, QSettings
 from PyQt5.QtGui import QIcon, QPixmap, QPainter, QFont
+
+# Setup logging
+logger = logging.getLogger(__name__)
+
+# Add parent directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from utils.file_utils import format_file_size
 
 class ScenarioManager:
     """Manages predefined and custom scenarios"""
@@ -304,31 +312,225 @@ class ScenarioExecutor(QThread):
     
     def execute_scan_step(self, step: Dict) -> Dict:
         """Execute file scanning step"""
-        # TODO: Implement actual file scanning
-        import time
-        time.sleep(2)  # Simulate work
-        return {'status': 'completed', 'files_found': 1250}
+        import os
+        from pathlib import Path
+
+        try:
+            # Get scan path from step or use default
+            scan_path = step.get('path', str(Path.home()))
+            recursive = step.get('recursive', True)
+
+            files_found = 0
+            folders_found = 0
+
+            if recursive:
+                # Scan recursively
+                for root, dirs, files in os.walk(scan_path):
+                    files_found += len(files)
+                    folders_found += len(dirs)
+            else:
+                # Scan only top level
+                try:
+                    items = os.listdir(scan_path)
+                    for item in items:
+                        item_path = os.path.join(scan_path, item)
+                        if os.path.isfile(item_path):
+                            files_found += 1
+                        elif os.path.isdir(item_path):
+                            folders_found += 1
+                except (PermissionError, FileNotFoundError):
+                    pass
+
+            return {
+                'status': 'completed',
+                'files_found': files_found,
+                'folders_found': folders_found,
+                'path': scan_path
+            }
+
+        except Exception as e:
+            return {
+                'status': 'error',
+                'error': f'File scanning failed: {e}'
+            }
     
     def execute_analyze_step(self, step: Dict) -> Dict:
         """Execute file analysis step"""
-        # TODO: Implement actual analysis
-        import time
-        time.sleep(1.5)
-        return {'status': 'completed', 'duplicates_found': 45, 'space_analysis': '2.3GB can be saved'}
+        import os
+        from pathlib import Path
+        from collections import defaultdict
+
+        try:
+            # Get analysis path from step or use default
+            analyze_path = step.get('path', str(Path.home()))
+
+            # Analyze file types and sizes
+            file_types = defaultdict(int)
+            total_size = 0
+            file_count = 0
+            duplicate_candidates = defaultdict(list)
+
+            for root, dirs, files in os.walk(analyze_path):
+                for file in files:
+                    try:
+                        file_path = os.path.join(root, file)
+                        file_size = os.path.getsize(file_path)
+                        file_ext = os.path.splitext(file)[1].lower()
+
+                        file_types[file_ext if file_ext else 'no_extension'] += 1
+                        total_size += file_size
+                        file_count += 1
+
+                        # Track potential duplicates by size and name
+                        duplicate_candidates[(file, file_size)].append(file_path)
+
+                    except (PermissionError, FileNotFoundError, OSError):
+                        continue
+
+            # Count potential duplicates
+            duplicates_found = sum(1 for paths in duplicate_candidates.values() if len(paths) > 1)
+
+            return {
+                'status': 'completed',
+                'files_analyzed': file_count,
+                'total_size': format_file_size(total_size),
+                'duplicates_found': duplicates_found,
+                'file_types': dict(file_types),
+                'space_analysis': f'{format_file_size(total_size * 0.1)} could potentially be saved'
+            }
+
+        except Exception as e:
+            return {
+                'status': 'error',
+                'error': f'File analysis failed: {e}'
+            }
     
     def execute_transfer_step(self, step: Dict) -> Dict:
         """Execute file transfer step"""
-        # TODO: Implement actual transfer
-        import time
-        time.sleep(3)
-        return {'status': 'completed', 'files_transferred': 1200, 'failed': 5}
+        import os
+        import shutil
+        from pathlib import Path
+
+        try:
+            # Get transfer parameters from step
+            source_path = step.get('source', '')
+            dest_path = step.get('destination', '')
+            file_pattern = step.get('pattern', '*')
+
+            if not source_path or not dest_path:
+                return {
+                    'status': 'error',
+                    'error': 'Source and destination paths required'
+                }
+
+            source = Path(source_path)
+            destination = Path(dest_path)
+
+            if not source.exists():
+                return {
+                    'status': 'error',
+                    'error': f'Source path does not exist: {source}'
+                }
+
+            # Create destination if it doesn't exist
+            destination.mkdir(parents=True, exist_ok=True)
+
+            files_transferred = 0
+            failed = 0
+
+            # Transfer files matching pattern
+            if source.is_file():
+                # Transfer single file
+                try:
+                    dest_file = destination / source.name
+                    shutil.copy2(source, dest_file)
+                    files_transferred += 1
+                except Exception as e:
+                    failed += 1
+            else:
+                # Transfer directory contents
+                for file_path in source.rglob(file_pattern):
+                    if file_path.is_file():
+                        try:
+                            relative_path = file_path.relative_to(source)
+                            dest_file = destination / relative_path
+                            dest_file.parent.mkdir(parents=True, exist_ok=True)
+                            shutil.copy2(file_path, dest_file)
+                            files_transferred += 1
+                        except Exception as e:
+                            failed += 1
+
+            return {
+                'status': 'completed',
+                'files_transferred': files_transferred,
+                'failed': failed,
+                'source': str(source),
+                'destination': str(destination)
+            }
+
+        except Exception as e:
+            return {
+                'status': 'error',
+                'error': f'File transfer failed: {e}'
+            }
     
     def execute_transcode_step(self, step: Dict) -> Dict:
         """Execute video transcoding step"""
-        # TODO: Implement actual transcoding
-        import time
-        time.sleep(4)
-        return {'status': 'completed', 'videos_transcoded': 25, 'space_saved': '1.8GB'}
+        import os
+        import sys
+        from pathlib import Path
+
+        try:
+            # Get transcoding parameters
+            source_path = step.get('source', '')
+            output_format = step.get('format', 'mp4')
+            quality = step.get('quality', 'medium')
+
+            if not source_path:
+                return {
+                    'status': 'error',
+                    'error': 'Source path required'
+                }
+
+            source = Path(source_path)
+            if not source.exists():
+                return {
+                    'status': 'error',
+                    'error': f'Source path does not exist: {source}'
+                }
+
+            # Try to import video transfer module
+            try:
+                # Add src directory to path
+                current_file = Path(__file__)
+                src_root = current_file.parent.parent
+                sys.path.insert(0, str(src_root))
+
+                from transfers.video_transfer import VideoTransferTool
+
+                # This would normally integrate with the video transfer tool
+                # For now, return simulated results
+                return {
+                    'status': 'info',
+                    'message': 'Video transcoding requires the video transfer tool',
+                    'videos_transcoded': 0,
+                    'space_saved': '0GB',
+                    'note': 'Use the Video Transfer tool from the system tray for transcoding'
+                }
+
+            except ImportError:
+                return {
+                    'status': 'info',
+                    'message': 'Video transcoding module not available',
+                    'videos_transcoded': 0,
+                    'note': 'Install video processing dependencies for transcoding support'
+                }
+
+        except Exception as e:
+            return {
+                'status': 'error',
+                'error': f'Video transcoding failed: {e}'
+            }
     
     def execute_organize_step(self, step: Dict) -> Dict:
         """Execute file organization step"""
@@ -394,14 +596,348 @@ class ScenarioExecutor(QThread):
     
     def execute_cleanup_step(self, step: Dict) -> Dict:
         """Execute cleanup step"""
-        # TODO: Implement actual cleanup
-        import time
-        time.sleep(1)
-        return {'status': 'completed', 'files_removed': 45, 'space_freed': '234MB'}
+        import os
+        import shutil
+        from pathlib import Path
+        from datetime import datetime, timedelta
+
+        try:
+            # Get cleanup parameters
+            cleanup_path = step.get('path', '')
+            cleanup_type = step.get('type', 'temp')  # temp, old, duplicates, empty
+            days_old = step.get('days_old', 30)
+
+            if not cleanup_path:
+                cleanup_path = str(Path.home())
+
+            path = Path(cleanup_path)
+            if not path.exists():
+                return {
+                    'status': 'error',
+                    'error': f'Cleanup path does not exist: {path}'
+                }
+
+            files_removed = 0
+            space_freed = 0
+
+            if cleanup_type == 'temp':
+                # Clean temporary files
+                temp_patterns = ['*.tmp', '*.temp', '*~', '*.bak', '*.cache']
+                for pattern in temp_patterns:
+                    for file_path in path.rglob(pattern):
+                        try:
+                            if file_path.is_file():
+                                size = file_path.stat().st_size
+                                file_path.unlink()
+                                files_removed += 1
+                                space_freed += size
+                        except (PermissionError, OSError):
+                            continue
+
+            elif cleanup_type == 'old':
+                # Clean old files
+                cutoff_date = datetime.now() - timedelta(days=days_old)
+                for file_path in path.rglob('*'):
+                    try:
+                        if file_path.is_file():
+                            file_time = datetime.fromtimestamp(file_path.stat().st_mtime)
+                            if file_time < cutoff_date:
+                                size = file_path.stat().st_size
+                                file_path.unlink()
+                                files_removed += 1
+                                space_freed += size
+                    except (PermissionError, OSError):
+                        continue
+
+            elif cleanup_type == 'empty':
+                # Clean empty directories
+                for dir_path in path.rglob('*'):
+                    try:
+                        if dir_path.is_dir() and not any(dir_path.iterdir()):
+                            dir_path.rmdir()
+                            files_removed += 1
+                    except (PermissionError, OSError):
+                        continue
+
+            return {
+                'status': 'completed',
+                'files_removed': files_removed,
+                'space_freed': format_file_size(space_freed),
+                'cleanup_type': cleanup_type
+            }
+
+        except Exception as e:
+            return {
+                'status': 'error',
+                'error': f'Cleanup failed: {e}'
+            }
     
     def cancel(self):
         """Cancel scenario execution"""
         self.is_cancelled = True
+
+class CustomScenarioCreatorDialog(QDialog):
+    """Dialog for creating custom scenarios"""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Create Custom Scenario")
+        self.setMinimumWidth(500)
+        self.setup_ui()
+
+    def setup_ui(self):
+        """Setup the UI"""
+        layout = QVBoxLayout(self)
+
+        # Scenario name
+        name_group = QGroupBox("Scenario Details")
+        name_layout = QGridLayout(name_group)
+
+        name_layout.addWidget(QLabel("Name:"), 0, 0)
+        self.name_edit = QLineEdit()
+        self.name_edit.setPlaceholderText("e.g., My Custom Workflow")
+        name_layout.addWidget(self.name_edit, 0, 1)
+
+        name_layout.addWidget(QLabel("Description:"), 1, 0)
+        self.desc_edit = QLineEdit()
+        self.desc_edit.setPlaceholderText("Brief description of what this scenario does")
+        name_layout.addWidget(self.desc_edit, 1, 1)
+
+        name_layout.addWidget(QLabel("Icon:"), 2, 0)
+        self.icon_edit = QLineEdit()
+        self.icon_edit.setText("⚙️")
+        self.icon_edit.setMaxLength(2)
+        name_layout.addWidget(self.icon_edit, 2, 1)
+
+        layout.addWidget(name_group)
+
+        # Steps configuration
+        steps_group = QGroupBox("Workflow Steps")
+        steps_layout = QVBoxLayout(steps_group)
+
+        self.scan_check = QCheckBox("Scan files")
+        self.scan_check.setChecked(True)
+        steps_layout.addWidget(self.scan_check)
+
+        self.analyze_check = QCheckBox("Analyze files")
+        steps_layout.addWidget(self.analyze_check)
+
+        self.organize_check = QCheckBox("Organize files")
+        steps_layout.addWidget(self.organize_check)
+
+        self.transfer_check = QCheckBox("Transfer files")
+        steps_layout.addWidget(self.transfer_check)
+
+        self.cleanup_check = QCheckBox("Cleanup temporary files")
+        steps_layout.addWidget(self.cleanup_check)
+
+        layout.addWidget(steps_group)
+
+        # Path configuration
+        path_group = QGroupBox("Paths")
+        path_layout = QGridLayout(path_group)
+
+        path_layout.addWidget(QLabel("Source Path:"), 0, 0)
+        self.source_edit = QLineEdit()
+        self.source_edit.setPlaceholderText("Leave empty to prompt at runtime")
+        path_layout.addWidget(self.source_edit, 0, 1)
+
+        source_browse = QPushButton("Browse...")
+        source_browse.clicked.connect(self.browse_source)
+        path_layout.addWidget(source_browse, 0, 2)
+
+        path_layout.addWidget(QLabel("Destination Path:"), 1, 0)
+        self.dest_edit = QLineEdit()
+        self.dest_edit.setPlaceholderText("Leave empty to prompt at runtime")
+        path_layout.addWidget(self.dest_edit, 1, 1)
+
+        dest_browse = QPushButton("Browse...")
+        dest_browse.clicked.connect(self.browse_dest)
+        path_layout.addWidget(dest_browse, 1, 2)
+
+        layout.addWidget(path_group)
+
+        # Buttons
+        button_layout = QHBoxLayout()
+        button_layout.addStretch()
+
+        create_btn = QPushButton("Create Scenario")
+        create_btn.clicked.connect(self.accept)
+        button_layout.addWidget(create_btn)
+
+        cancel_btn = QPushButton("Cancel")
+        cancel_btn.clicked.connect(self.reject)
+        button_layout.addWidget(cancel_btn)
+
+        layout.addLayout(button_layout)
+
+    def browse_source(self):
+        """Browse for source directory"""
+        path = QFileDialog.getExistingDirectory(self, "Select Source Directory")
+        if path:
+            self.source_edit.setText(path)
+
+    def browse_dest(self):
+        """Browse for destination directory"""
+        path = QFileDialog.getExistingDirectory(self, "Select Destination Directory")
+        if path:
+            self.dest_edit.setText(path)
+
+    def get_scenario_data(self) -> Optional[Dict]:
+        """Get the scenario data from the form"""
+        name = self.name_edit.text().strip()
+        if not name:
+            QMessageBox.warning(self, "Validation Error", "Please enter a scenario name.")
+            return None
+
+        # Build steps list
+        steps = []
+        if self.scan_check.isChecked():
+            steps.append({"type": "scan", "path": self.source_edit.text() or None})
+        if self.analyze_check.isChecked():
+            steps.append({"type": "analyze"})
+        if self.organize_check.isChecked():
+            steps.append({"type": "organize"})
+        if self.transfer_check.isChecked():
+            steps.append({"type": "transfer", "source": self.source_edit.text() or None,
+                         "destination": self.dest_edit.text() or None})
+        if self.cleanup_check.isChecked():
+            steps.append({"type": "cleanup"})
+
+        # Generate unique ID
+        scenario_id = name.lower().replace(' ', '_').replace('-', '_')
+        import time
+        scenario_id = f"custom_{scenario_id}_{int(time.time())}"
+
+        return {
+            'id': scenario_id,
+            'name': name,
+            'description': self.desc_edit.text().strip() or "Custom scenario",
+            'icon': self.icon_edit.text() or "⚙️",
+            'category': 'custom',
+            'steps': steps,
+            'settings': {}
+        }
+
+
+class SettingsDialog(QDialog):
+    """Settings dialog for FileOrganizer system tray"""
+
+    def __init__(self, settings: QSettings, parent=None):
+        super().__init__(parent)
+        self.settings = settings
+        self.setWindowTitle("FileOrganizer Settings")
+        self.setMinimumWidth(450)
+        self.setup_ui()
+        self.load_settings()
+
+    def setup_ui(self):
+        """Setup the UI"""
+        layout = QVBoxLayout(self)
+
+        # General settings
+        general_group = QGroupBox("General")
+        general_layout = QGridLayout(general_group)
+
+        self.startup_msg_check = QCheckBox("Show startup message")
+        general_layout.addWidget(self.startup_msg_check, 0, 0, 1, 2)
+
+        self.minimize_to_tray_check = QCheckBox("Minimize to tray instead of taskbar")
+        general_layout.addWidget(self.minimize_to_tray_check, 1, 0, 1, 2)
+
+        self.confirm_exit_check = QCheckBox("Confirm before exit")
+        general_layout.addWidget(self.confirm_exit_check, 2, 0, 1, 2)
+
+        layout.addWidget(general_group)
+
+        # Notification settings
+        notification_group = QGroupBox("Notifications")
+        notification_layout = QGridLayout(notification_group)
+
+        notification_layout.addWidget(QLabel("Notification Duration (seconds):"), 0, 0)
+        self.notification_duration = QSpinBox()
+        self.notification_duration.setRange(1, 30)
+        self.notification_duration.setValue(5)
+        notification_layout.addWidget(self.notification_duration, 0, 1)
+
+        self.show_completion_check = QCheckBox("Show completion notifications")
+        notification_layout.addWidget(self.show_completion_check, 1, 0, 1, 2)
+
+        self.show_error_check = QCheckBox("Show error notifications")
+        notification_layout.addWidget(self.show_error_check, 2, 0, 1, 2)
+
+        layout.addWidget(notification_group)
+
+        # File organization settings
+        org_group = QGroupBox("File Organization")
+        org_layout = QGridLayout(org_group)
+
+        self.auto_organize_check = QCheckBox("Auto-organize downloads")
+        org_layout.addWidget(self.auto_organize_check, 0, 0, 1, 2)
+
+        org_layout.addWidget(QLabel("Auto-organize interval (minutes):"), 1, 0)
+        self.auto_organize_interval = QSpinBox()
+        self.auto_organize_interval.setRange(5, 1440)
+        self.auto_organize_interval.setValue(60)
+        org_layout.addWidget(self.auto_organize_interval, 1, 1)
+
+        self.verify_moves_check = QCheckBox("Verify file moves")
+        org_layout.addWidget(self.verify_moves_check, 2, 0, 1, 2)
+
+        layout.addWidget(org_group)
+
+        # Buttons
+        button_layout = QHBoxLayout()
+        button_layout.addStretch()
+
+        reset_btn = QPushButton("Reset to Defaults")
+        reset_btn.clicked.connect(self.reset_to_defaults)
+        button_layout.addWidget(reset_btn)
+
+        save_btn = QPushButton("Save")
+        save_btn.clicked.connect(self.accept)
+        button_layout.addWidget(save_btn)
+
+        cancel_btn = QPushButton("Cancel")
+        cancel_btn.clicked.connect(self.reject)
+        button_layout.addWidget(cancel_btn)
+
+        layout.addLayout(button_layout)
+
+    def load_settings(self):
+        """Load settings from QSettings"""
+        self.startup_msg_check.setChecked(self.settings.value('show_startup_message', True, bool))
+        self.minimize_to_tray_check.setChecked(self.settings.value('minimize_to_tray', True, bool))
+        self.confirm_exit_check.setChecked(self.settings.value('confirm_exit', True, bool))
+        self.notification_duration.setValue(self.settings.value('notification_duration', 5, int))
+        self.show_completion_check.setChecked(self.settings.value('show_completion', True, bool))
+        self.show_error_check.setChecked(self.settings.value('show_errors', True, bool))
+        self.auto_organize_check.setChecked(self.settings.value('auto_organize', False, bool))
+        self.auto_organize_interval.setValue(self.settings.value('auto_organize_interval', 60, int))
+        self.verify_moves_check.setChecked(self.settings.value('verify_moves', True, bool))
+
+    def save_settings(self):
+        """Save settings to QSettings"""
+        self.settings.setValue('show_startup_message', self.startup_msg_check.isChecked())
+        self.settings.setValue('minimize_to_tray', self.minimize_to_tray_check.isChecked())
+        self.settings.setValue('confirm_exit', self.confirm_exit_check.isChecked())
+        self.settings.setValue('notification_duration', self.notification_duration.value())
+        self.settings.setValue('show_completion', self.show_completion_check.isChecked())
+        self.settings.setValue('show_errors', self.show_error_check.isChecked())
+        self.settings.setValue('auto_organize', self.auto_organize_check.isChecked())
+        self.settings.setValue('auto_organize_interval', self.auto_organize_interval.value())
+        self.settings.setValue('verify_moves', self.verify_moves_check.isChecked())
+
+    def reset_to_defaults(self):
+        """Reset all settings to defaults"""
+        reply = QMessageBox.question(self, "Reset Settings",
+                                     "Are you sure you want to reset all settings to defaults?",
+                                     QMessageBox.Yes | QMessageBox.No,
+                                     QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            self.settings.clear()
+            self.load_settings()
+
 
 class ScenarioDialog(QDialog):
     """Dialog for selecting and configuring scenarios"""
@@ -558,9 +1094,31 @@ class ScenarioDialog(QDialog):
     
     def create_custom_scenario(self):
         """Create a custom scenario"""
-        # TODO: Implement custom scenario creator
-        QMessageBox.information(self, "Custom Scenarios", 
-                               "Custom scenario creator will be available in the next version.")
+        dialog = CustomScenarioCreatorDialog(self)
+        if dialog.exec_() == QDialog.Accepted:
+            # Get the custom scenario data
+            scenario_data = dialog.get_scenario_data()
+            if scenario_data:
+                # Save to user scenarios
+                self.save_custom_scenario(scenario_data)
+                QMessageBox.information(self, "Scenario Created",
+                                      f"Custom scenario '{scenario_data['name']}' has been created successfully!")
+
+    def save_custom_scenario(self, scenario_data: Dict):
+        """Save custom scenario to user's configuration"""
+        try:
+            # Get user scenarios directory
+            config_dir = Path.home() / '.fileorganizer' / 'scenarios'
+            config_dir.mkdir(parents=True, exist_ok=True)
+
+            # Save scenario as JSON
+            scenario_file = config_dir / f"{scenario_data['id']}.json"
+            with open(scenario_file, 'w') as f:
+                json.dump(scenario_data, f, indent=2)
+
+        except Exception as e:
+            QMessageBox.warning(self, "Save Error",
+                              f"Failed to save custom scenario: {e}")
     
     def run_scenario(self):
         """Run the selected scenario"""
@@ -913,8 +1471,11 @@ class SystemTrayManager(QSystemTrayIcon):
     
     def show_settings(self):
         """Show settings dialog"""
-        # TODO: Implement settings dialog
-        self.showMessage("Settings", "Settings dialog coming soon!", QSystemTrayIcon.Information)
+        dialog = SettingsDialog(self.settings)
+        if dialog.exec_() == QDialog.Accepted:
+            # Save settings
+            dialog.save_settings()
+            self.showMessage("Settings", "Settings saved successfully!", QSystemTrayIcon.Information)
     
     def show_about(self):
         """Show about dialog"""
