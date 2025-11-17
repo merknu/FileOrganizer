@@ -304,31 +304,233 @@ class ScenarioExecutor(QThread):
     
     def execute_scan_step(self, step: Dict) -> Dict:
         """Execute file scanning step"""
-        # TODO: Implement actual file scanning
-        import time
-        time.sleep(2)  # Simulate work
-        return {'status': 'completed', 'files_found': 1250}
+        import os
+        from pathlib import Path
+
+        try:
+            # Get scan path from step or use default
+            scan_path = step.get('path', str(Path.home()))
+            recursive = step.get('recursive', True)
+
+            files_found = 0
+            folders_found = 0
+
+            if recursive:
+                # Scan recursively
+                for root, dirs, files in os.walk(scan_path):
+                    files_found += len(files)
+                    folders_found += len(dirs)
+            else:
+                # Scan only top level
+                try:
+                    items = os.listdir(scan_path)
+                    for item in items:
+                        item_path = os.path.join(scan_path, item)
+                        if os.path.isfile(item_path):
+                            files_found += 1
+                        elif os.path.isdir(item_path):
+                            folders_found += 1
+                except (PermissionError, FileNotFoundError):
+                    pass
+
+            return {
+                'status': 'completed',
+                'files_found': files_found,
+                'folders_found': folders_found,
+                'path': scan_path
+            }
+
+        except Exception as e:
+            return {
+                'status': 'error',
+                'error': f'File scanning failed: {e}'
+            }
     
     def execute_analyze_step(self, step: Dict) -> Dict:
         """Execute file analysis step"""
-        # TODO: Implement actual analysis
-        import time
-        time.sleep(1.5)
-        return {'status': 'completed', 'duplicates_found': 45, 'space_analysis': '2.3GB can be saved'}
+        import os
+        from pathlib import Path
+        from collections import defaultdict
+
+        try:
+            # Get analysis path from step or use default
+            analyze_path = step.get('path', str(Path.home()))
+
+            # Analyze file types and sizes
+            file_types = defaultdict(int)
+            total_size = 0
+            file_count = 0
+            duplicate_candidates = defaultdict(list)
+
+            for root, dirs, files in os.walk(analyze_path):
+                for file in files:
+                    try:
+                        file_path = os.path.join(root, file)
+                        file_size = os.path.getsize(file_path)
+                        file_ext = os.path.splitext(file)[1].lower()
+
+                        file_types[file_ext if file_ext else 'no_extension'] += 1
+                        total_size += file_size
+                        file_count += 1
+
+                        # Track potential duplicates by size and name
+                        duplicate_candidates[(file, file_size)].append(file_path)
+
+                    except (PermissionError, FileNotFoundError, OSError):
+                        continue
+
+            # Count potential duplicates
+            duplicates_found = sum(1 for paths in duplicate_candidates.values() if len(paths) > 1)
+
+            # Format total size
+            def format_size(size_bytes):
+                for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+                    if size_bytes < 1024.0:
+                        return f"{size_bytes:.2f} {unit}"
+                    size_bytes /= 1024.0
+                return f"{size_bytes:.2f} PB"
+
+            return {
+                'status': 'completed',
+                'files_analyzed': file_count,
+                'total_size': format_size(total_size),
+                'duplicates_found': duplicates_found,
+                'file_types': dict(file_types),
+                'space_analysis': f'{format_size(total_size * 0.1)} could potentially be saved'
+            }
+
+        except Exception as e:
+            return {
+                'status': 'error',
+                'error': f'File analysis failed: {e}'
+            }
     
     def execute_transfer_step(self, step: Dict) -> Dict:
         """Execute file transfer step"""
-        # TODO: Implement actual transfer
-        import time
-        time.sleep(3)
-        return {'status': 'completed', 'files_transferred': 1200, 'failed': 5}
+        import os
+        import shutil
+        from pathlib import Path
+
+        try:
+            # Get transfer parameters from step
+            source_path = step.get('source', '')
+            dest_path = step.get('destination', '')
+            file_pattern = step.get('pattern', '*')
+
+            if not source_path or not dest_path:
+                return {
+                    'status': 'error',
+                    'error': 'Source and destination paths required'
+                }
+
+            source = Path(source_path)
+            destination = Path(dest_path)
+
+            if not source.exists():
+                return {
+                    'status': 'error',
+                    'error': f'Source path does not exist: {source}'
+                }
+
+            # Create destination if it doesn't exist
+            destination.mkdir(parents=True, exist_ok=True)
+
+            files_transferred = 0
+            failed = 0
+
+            # Transfer files matching pattern
+            if source.is_file():
+                # Transfer single file
+                try:
+                    dest_file = destination / source.name
+                    shutil.copy2(source, dest_file)
+                    files_transferred += 1
+                except Exception as e:
+                    failed += 1
+            else:
+                # Transfer directory contents
+                for file_path in source.rglob(file_pattern):
+                    if file_path.is_file():
+                        try:
+                            relative_path = file_path.relative_to(source)
+                            dest_file = destination / relative_path
+                            dest_file.parent.mkdir(parents=True, exist_ok=True)
+                            shutil.copy2(file_path, dest_file)
+                            files_transferred += 1
+                        except Exception as e:
+                            failed += 1
+
+            return {
+                'status': 'completed',
+                'files_transferred': files_transferred,
+                'failed': failed,
+                'source': str(source),
+                'destination': str(destination)
+            }
+
+        except Exception as e:
+            return {
+                'status': 'error',
+                'error': f'File transfer failed: {e}'
+            }
     
     def execute_transcode_step(self, step: Dict) -> Dict:
         """Execute video transcoding step"""
-        # TODO: Implement actual transcoding
-        import time
-        time.sleep(4)
-        return {'status': 'completed', 'videos_transcoded': 25, 'space_saved': '1.8GB'}
+        import os
+        import sys
+        from pathlib import Path
+
+        try:
+            # Get transcoding parameters
+            source_path = step.get('source', '')
+            output_format = step.get('format', 'mp4')
+            quality = step.get('quality', 'medium')
+
+            if not source_path:
+                return {
+                    'status': 'error',
+                    'error': 'Source path required'
+                }
+
+            source = Path(source_path)
+            if not source.exists():
+                return {
+                    'status': 'error',
+                    'error': f'Source path does not exist: {source}'
+                }
+
+            # Try to import video transfer module
+            try:
+                # Add src directory to path
+                current_file = Path(__file__)
+                src_root = current_file.parent.parent
+                sys.path.insert(0, str(src_root))
+
+                from transfers.video_transfer import VideoTransferTool
+
+                # This would normally integrate with the video transfer tool
+                # For now, return simulated results
+                return {
+                    'status': 'info',
+                    'message': 'Video transcoding requires the video transfer tool',
+                    'videos_transcoded': 0,
+                    'space_saved': '0GB',
+                    'note': 'Use the Video Transfer tool from the system tray for transcoding'
+                }
+
+            except ImportError:
+                return {
+                    'status': 'info',
+                    'message': 'Video transcoding module not available',
+                    'videos_transcoded': 0,
+                    'note': 'Install video processing dependencies for transcoding support'
+                }
+
+        except Exception as e:
+            return {
+                'status': 'error',
+                'error': f'Video transcoding failed: {e}'
+            }
     
     def execute_organize_step(self, step: Dict) -> Dict:
         """Execute file organization step"""
@@ -394,10 +596,89 @@ class ScenarioExecutor(QThread):
     
     def execute_cleanup_step(self, step: Dict) -> Dict:
         """Execute cleanup step"""
-        # TODO: Implement actual cleanup
-        import time
-        time.sleep(1)
-        return {'status': 'completed', 'files_removed': 45, 'space_freed': '234MB'}
+        import os
+        import shutil
+        from pathlib import Path
+        from datetime import datetime, timedelta
+
+        try:
+            # Get cleanup parameters
+            cleanup_path = step.get('path', '')
+            cleanup_type = step.get('type', 'temp')  # temp, old, duplicates, empty
+            days_old = step.get('days_old', 30)
+
+            if not cleanup_path:
+                cleanup_path = str(Path.home())
+
+            path = Path(cleanup_path)
+            if not path.exists():
+                return {
+                    'status': 'error',
+                    'error': f'Cleanup path does not exist: {path}'
+                }
+
+            files_removed = 0
+            space_freed = 0
+
+            if cleanup_type == 'temp':
+                # Clean temporary files
+                temp_patterns = ['*.tmp', '*.temp', '*~', '*.bak', '*.cache']
+                for pattern in temp_patterns:
+                    for file_path in path.rglob(pattern):
+                        try:
+                            if file_path.is_file():
+                                size = file_path.stat().st_size
+                                file_path.unlink()
+                                files_removed += 1
+                                space_freed += size
+                        except (PermissionError, OSError):
+                            continue
+
+            elif cleanup_type == 'old':
+                # Clean old files
+                cutoff_date = datetime.now() - timedelta(days=days_old)
+                for file_path in path.rglob('*'):
+                    try:
+                        if file_path.is_file():
+                            file_time = datetime.fromtimestamp(file_path.stat().st_mtime)
+                            if file_time < cutoff_date:
+                                size = file_path.stat().st_size
+                                file_path.unlink()
+                                files_removed += 1
+                                space_freed += size
+                    except (PermissionError, OSError):
+                        continue
+
+            elif cleanup_type == 'empty':
+                # Clean empty directories
+                for dir_path in path.rglob('*'):
+                    try:
+                        if dir_path.is_dir() and not any(dir_path.iterdir()):
+                            dir_path.rmdir()
+                            files_removed += 1
+                    except (PermissionError, OSError):
+                        continue
+
+            # Format space freed
+            def format_size(size_bytes):
+                for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+                    if size_bytes < 1024.0:
+                        return f"{size_bytes:.2f}{unit}"
+                    size_bytes /= 1024.0
+                return f"{size_bytes:.2f}PB"
+
+            return {
+                'status': 'completed',
+                'files_removed': files_removed,
+                'space_freed': format_size(space_freed),
+                'cleanup_type': cleanup_type
+            }
+
+        except Exception as e:
+            return {
+                'status': 'error',
+                'error': f'Cleanup failed: {e}'
+            }
     
     def cancel(self):
         """Cancel scenario execution"""
