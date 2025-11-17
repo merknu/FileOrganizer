@@ -684,6 +684,269 @@ class ScenarioExecutor(QThread):
         """Cancel scenario execution"""
         self.is_cancelled = True
 
+class CustomScenarioCreatorDialog(QDialog):
+    """Dialog for creating custom scenarios"""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Create Custom Scenario")
+        self.setMinimumWidth(500)
+        self.setup_ui()
+
+    def setup_ui(self):
+        """Setup the UI"""
+        layout = QVBoxLayout(self)
+
+        # Scenario name
+        name_group = QGroupBox("Scenario Details")
+        name_layout = QGridLayout(name_group)
+
+        name_layout.addWidget(QLabel("Name:"), 0, 0)
+        self.name_edit = QLineEdit()
+        self.name_edit.setPlaceholderText("e.g., My Custom Workflow")
+        name_layout.addWidget(self.name_edit, 0, 1)
+
+        name_layout.addWidget(QLabel("Description:"), 1, 0)
+        self.desc_edit = QLineEdit()
+        self.desc_edit.setPlaceholderText("Brief description of what this scenario does")
+        name_layout.addWidget(self.desc_edit, 1, 1)
+
+        name_layout.addWidget(QLabel("Icon:"), 2, 0)
+        self.icon_edit = QLineEdit()
+        self.icon_edit.setText("⚙️")
+        self.icon_edit.setMaxLength(2)
+        name_layout.addWidget(self.icon_edit, 2, 1)
+
+        layout.addWidget(name_group)
+
+        # Steps configuration
+        steps_group = QGroupBox("Workflow Steps")
+        steps_layout = QVBoxLayout(steps_group)
+
+        self.scan_check = QCheckBox("Scan files")
+        self.scan_check.setChecked(True)
+        steps_layout.addWidget(self.scan_check)
+
+        self.analyze_check = QCheckBox("Analyze files")
+        steps_layout.addWidget(self.analyze_check)
+
+        self.organize_check = QCheckBox("Organize files")
+        steps_layout.addWidget(self.organize_check)
+
+        self.transfer_check = QCheckBox("Transfer files")
+        steps_layout.addWidget(self.transfer_check)
+
+        self.cleanup_check = QCheckBox("Cleanup temporary files")
+        steps_layout.addWidget(self.cleanup_check)
+
+        layout.addWidget(steps_group)
+
+        # Path configuration
+        path_group = QGroupBox("Paths")
+        path_layout = QGridLayout(path_group)
+
+        path_layout.addWidget(QLabel("Source Path:"), 0, 0)
+        self.source_edit = QLineEdit()
+        self.source_edit.setPlaceholderText("Leave empty to prompt at runtime")
+        path_layout.addWidget(self.source_edit, 0, 1)
+
+        source_browse = QPushButton("Browse...")
+        source_browse.clicked.connect(self.browse_source)
+        path_layout.addWidget(source_browse, 0, 2)
+
+        path_layout.addWidget(QLabel("Destination Path:"), 1, 0)
+        self.dest_edit = QLineEdit()
+        self.dest_edit.setPlaceholderText("Leave empty to prompt at runtime")
+        path_layout.addWidget(self.dest_edit, 1, 1)
+
+        dest_browse = QPushButton("Browse...")
+        dest_browse.clicked.connect(self.browse_dest)
+        path_layout.addWidget(dest_browse, 1, 2)
+
+        layout.addWidget(path_group)
+
+        # Buttons
+        button_layout = QHBoxLayout()
+        button_layout.addStretch()
+
+        create_btn = QPushButton("Create Scenario")
+        create_btn.clicked.connect(self.accept)
+        button_layout.addWidget(create_btn)
+
+        cancel_btn = QPushButton("Cancel")
+        cancel_btn.clicked.connect(self.reject)
+        button_layout.addWidget(cancel_btn)
+
+        layout.addLayout(button_layout)
+
+    def browse_source(self):
+        """Browse for source directory"""
+        path = QFileDialog.getExistingDirectory(self, "Select Source Directory")
+        if path:
+            self.source_edit.setText(path)
+
+    def browse_dest(self):
+        """Browse for destination directory"""
+        path = QFileDialog.getExistingDirectory(self, "Select Destination Directory")
+        if path:
+            self.dest_edit.setText(path)
+
+    def get_scenario_data(self) -> Optional[Dict]:
+        """Get the scenario data from the form"""
+        name = self.name_edit.text().strip()
+        if not name:
+            QMessageBox.warning(self, "Validation Error", "Please enter a scenario name.")
+            return None
+
+        # Build steps list
+        steps = []
+        if self.scan_check.isChecked():
+            steps.append({"type": "scan", "path": self.source_edit.text() or None})
+        if self.analyze_check.isChecked():
+            steps.append({"type": "analyze"})
+        if self.organize_check.isChecked():
+            steps.append({"type": "organize"})
+        if self.transfer_check.isChecked():
+            steps.append({"type": "transfer", "source": self.source_edit.text() or None,
+                         "destination": self.dest_edit.text() or None})
+        if self.cleanup_check.isChecked():
+            steps.append({"type": "cleanup"})
+
+        # Generate unique ID
+        scenario_id = name.lower().replace(' ', '_').replace('-', '_')
+        import time
+        scenario_id = f"custom_{scenario_id}_{int(time.time())}"
+
+        return {
+            'id': scenario_id,
+            'name': name,
+            'description': self.desc_edit.text().strip() or "Custom scenario",
+            'icon': self.icon_edit.text() or "⚙️",
+            'category': 'custom',
+            'steps': steps,
+            'settings': {}
+        }
+
+
+class SettingsDialog(QDialog):
+    """Settings dialog for FileOrganizer system tray"""
+
+    def __init__(self, settings: QSettings, parent=None):
+        super().__init__(parent)
+        self.settings = settings
+        self.setWindowTitle("FileOrganizer Settings")
+        self.setMinimumWidth(450)
+        self.setup_ui()
+        self.load_settings()
+
+    def setup_ui(self):
+        """Setup the UI"""
+        layout = QVBoxLayout(self)
+
+        # General settings
+        general_group = QGroupBox("General")
+        general_layout = QGridLayout(general_group)
+
+        self.startup_msg_check = QCheckBox("Show startup message")
+        general_layout.addWidget(self.startup_msg_check, 0, 0, 1, 2)
+
+        self.minimize_to_tray_check = QCheckBox("Minimize to tray instead of taskbar")
+        general_layout.addWidget(self.minimize_to_tray_check, 1, 0, 1, 2)
+
+        self.confirm_exit_check = QCheckBox("Confirm before exit")
+        general_layout.addWidget(self.confirm_exit_check, 2, 0, 1, 2)
+
+        layout.addWidget(general_group)
+
+        # Notification settings
+        notification_group = QGroupBox("Notifications")
+        notification_layout = QGridLayout(notification_group)
+
+        notification_layout.addWidget(QLabel("Notification Duration (seconds):"), 0, 0)
+        self.notification_duration = QSpinBox()
+        self.notification_duration.setRange(1, 30)
+        self.notification_duration.setValue(5)
+        notification_layout.addWidget(self.notification_duration, 0, 1)
+
+        self.show_completion_check = QCheckBox("Show completion notifications")
+        notification_layout.addWidget(self.show_completion_check, 1, 0, 1, 2)
+
+        self.show_error_check = QCheckBox("Show error notifications")
+        notification_layout.addWidget(self.show_error_check, 2, 0, 1, 2)
+
+        layout.addWidget(notification_group)
+
+        # File organization settings
+        org_group = QGroupBox("File Organization")
+        org_layout = QGridLayout(org_group)
+
+        self.auto_organize_check = QCheckBox("Auto-organize downloads")
+        org_layout.addWidget(self.auto_organize_check, 0, 0, 1, 2)
+
+        org_layout.addWidget(QLabel("Auto-organize interval (minutes):"), 1, 0)
+        self.auto_organize_interval = QSpinBox()
+        self.auto_organize_interval.setRange(5, 1440)
+        self.auto_organize_interval.setValue(60)
+        org_layout.addWidget(self.auto_organize_interval, 1, 1)
+
+        self.verify_moves_check = QCheckBox("Verify file moves")
+        org_layout.addWidget(self.verify_moves_check, 2, 0, 1, 2)
+
+        layout.addWidget(org_group)
+
+        # Buttons
+        button_layout = QHBoxLayout()
+        button_layout.addStretch()
+
+        reset_btn = QPushButton("Reset to Defaults")
+        reset_btn.clicked.connect(self.reset_to_defaults)
+        button_layout.addWidget(reset_btn)
+
+        save_btn = QPushButton("Save")
+        save_btn.clicked.connect(self.accept)
+        button_layout.addWidget(save_btn)
+
+        cancel_btn = QPushButton("Cancel")
+        cancel_btn.clicked.connect(self.reject)
+        button_layout.addWidget(cancel_btn)
+
+        layout.addLayout(button_layout)
+
+    def load_settings(self):
+        """Load settings from QSettings"""
+        self.startup_msg_check.setChecked(self.settings.value('show_startup_message', True, bool))
+        self.minimize_to_tray_check.setChecked(self.settings.value('minimize_to_tray', True, bool))
+        self.confirm_exit_check.setChecked(self.settings.value('confirm_exit', True, bool))
+        self.notification_duration.setValue(self.settings.value('notification_duration', 5, int))
+        self.show_completion_check.setChecked(self.settings.value('show_completion', True, bool))
+        self.show_error_check.setChecked(self.settings.value('show_errors', True, bool))
+        self.auto_organize_check.setChecked(self.settings.value('auto_organize', False, bool))
+        self.auto_organize_interval.setValue(self.settings.value('auto_organize_interval', 60, int))
+        self.verify_moves_check.setChecked(self.settings.value('verify_moves', True, bool))
+
+    def save_settings(self):
+        """Save settings to QSettings"""
+        self.settings.setValue('show_startup_message', self.startup_msg_check.isChecked())
+        self.settings.setValue('minimize_to_tray', self.minimize_to_tray_check.isChecked())
+        self.settings.setValue('confirm_exit', self.confirm_exit_check.isChecked())
+        self.settings.setValue('notification_duration', self.notification_duration.value())
+        self.settings.setValue('show_completion', self.show_completion_check.isChecked())
+        self.settings.setValue('show_errors', self.show_error_check.isChecked())
+        self.settings.setValue('auto_organize', self.auto_organize_check.isChecked())
+        self.settings.setValue('auto_organize_interval', self.auto_organize_interval.value())
+        self.settings.setValue('verify_moves', self.verify_moves_check.isChecked())
+
+    def reset_to_defaults(self):
+        """Reset all settings to defaults"""
+        reply = QMessageBox.question(self, "Reset Settings",
+                                     "Are you sure you want to reset all settings to defaults?",
+                                     QMessageBox.Yes | QMessageBox.No,
+                                     QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            self.settings.clear()
+            self.load_settings()
+
+
 class ScenarioDialog(QDialog):
     """Dialog for selecting and configuring scenarios"""
     
@@ -839,9 +1102,31 @@ class ScenarioDialog(QDialog):
     
     def create_custom_scenario(self):
         """Create a custom scenario"""
-        # TODO: Implement custom scenario creator
-        QMessageBox.information(self, "Custom Scenarios", 
-                               "Custom scenario creator will be available in the next version.")
+        dialog = CustomScenarioCreatorDialog(self)
+        if dialog.exec_() == QDialog.Accepted:
+            # Get the custom scenario data
+            scenario_data = dialog.get_scenario_data()
+            if scenario_data:
+                # Save to user scenarios
+                self.save_custom_scenario(scenario_data)
+                QMessageBox.information(self, "Scenario Created",
+                                      f"Custom scenario '{scenario_data['name']}' has been created successfully!")
+
+    def save_custom_scenario(self, scenario_data: Dict):
+        """Save custom scenario to user's configuration"""
+        try:
+            # Get user scenarios directory
+            config_dir = Path.home() / '.fileorganizer' / 'scenarios'
+            config_dir.mkdir(parents=True, exist_ok=True)
+
+            # Save scenario as JSON
+            scenario_file = config_dir / f"{scenario_data['id']}.json"
+            with open(scenario_file, 'w') as f:
+                json.dump(scenario_data, f, indent=2)
+
+        except Exception as e:
+            QMessageBox.warning(self, "Save Error",
+                              f"Failed to save custom scenario: {e}")
     
     def run_scenario(self):
         """Run the selected scenario"""
@@ -1194,8 +1479,11 @@ class SystemTrayManager(QSystemTrayIcon):
     
     def show_settings(self):
         """Show settings dialog"""
-        # TODO: Implement settings dialog
-        self.showMessage("Settings", "Settings dialog coming soon!", QSystemTrayIcon.Information)
+        dialog = SettingsDialog(self.settings)
+        if dialog.exec_() == QDialog.Accepted:
+            # Save settings
+            dialog.save_settings()
+            self.showMessage("Settings", "Settings saved successfully!", QSystemTrayIcon.Information)
     
     def show_about(self):
         """Show about dialog"""

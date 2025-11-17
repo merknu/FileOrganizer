@@ -494,7 +494,7 @@ class DownloadsOrganizer:
             file_time = datetime.fromtimestamp(file_path.stat().st_mtime)
             time_diff = datetime.now() - file_time
             return time_diff.total_seconds() < (hours * 3600)
-        except:
+        except (OSError, ValueError, OverflowError):
             return True  # If we can't determine, assume it's recent
     
     def get_unique_filename(self, destination: Path, filename: str) -> Path:
