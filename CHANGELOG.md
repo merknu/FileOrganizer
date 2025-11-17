@@ -5,6 +5,31 @@ All notable changes to FileOrganizer will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.008] - 2025-11-17
+
+### Added
+- **Utility Module**: New `src/utils/` package for common utilities
+  - `format_file_size()`: Human-readable file size formatting
+  - `validate_path()`: Safe path validation with security checks
+  - `sanitize_filename()`: Remove invalid characters from filenames
+  - `get_unique_path()`: Generate unique file paths avoiding conflicts
+- **Comprehensive Test Suite**: 11 unit tests for utility functions with 100% coverage
+- **Logging Support**: Added logging to system_tray_manager.py for better debugging
+
+### Changed
+- Refactored duplicate `format_size()` functions to use centralized `format_file_size()` utility
+- Improved platform independence in test code (Path.home() instead of hardcoded paths)
+- Better code organization with shared utilities
+
+### Fixed
+- Hardcoded paths in `gui/tray_statistics.py` test code now use platform-independent paths
+- Code duplication eliminated across multiple files
+
+### Improved
+- Code maintainability through utility function extraction
+- Test coverage with comprehensive unit tests
+- Logging infrastructure for debugging
+
 ## [0.2.007] - 2025-11-17
 
 ### Added
