@@ -5,6 +5,34 @@ All notable changes to FileOrganizer will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.009] - 2025-11-17
+
+### Added
+- **Constants Module**: New `src/utils/constants.py` with application-wide constants
+  - File size constants (KB, MB, GB, TB, PB)
+  - Time constants (SECOND, MINUTE, HOUR, DAY, WEEK)
+  - UI constants (dialog sizes, update intervals)
+  - File format definitions (images, videos, audio, documents, archives)
+  - Default settings and limits
+  - Temporary file patterns and exclude patterns
+
+- **Enhanced Utility Functions** in `src/utils/file_utils.py`:
+  - `get_file_hash()`: Calculate file hashes with multiple algorithms (MD5, SHA1, SHA256, SHA512)
+  - `is_binary_file()`: Detect if file is binary by content analysis
+  - `safe_copy()`: Copy files with hash verification and error handling
+  - `get_file_age_days()`: Get file age in days from modification time
+
+### Changed
+- Replaced console `print()` with `logging.debug()` in `src/core/main_enhanced.py`
+- Enhanced `src/utils/__init__.py` with better organization and exports
+- Updated utility module to export 8 functions and 6 constants
+
+### Improved
+- Code organization with centralized constants
+- Type hints throughout utility module
+- Comprehensive docstrings with examples for all utilities
+- Better error handling in all utility functions
+
 ## [0.2.008] - 2025-11-17
 
 ### Added
